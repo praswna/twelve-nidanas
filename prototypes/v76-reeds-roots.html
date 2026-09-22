@@ -1,0 +1,330 @@
+<title>연기의 나무</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500&display=swap">
+<style>
+  :root{
+    --bg:#0c0d0f; --ink:#d8d3c8; --dim:#3a3b3f;
+    --ember:#c98a4a; --glow:#ffcf8a; --reed:#4a3e32;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Serif KR","Apple SD Gothic Neo",serif;font-weight:300;
+    display:flex;flex-direction:column;padding-inline:16px;box-sizing:border-box}
+  #stage{flex:1;min-height:0}
+  svg{width:100%;height:100%;display:block}
+  #line{height:64px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;letter-spacing:.06em;opacity:.85;text-align:center}
+  #hint{position:fixed;top:14px;left:0;right:0;text-align:center;font-size:12px;
+    letter-spacing:.2em;color:#6a6b70;transition:opacity 1.5s}
+  .root{cursor:pointer;transition:transform 1.6s cubic-bezier(.4,0,.9,1);transform-box:fill-box}
+  .root path{fill:none;stroke:#2e2f33;stroke-width:1.6;stroke-linecap:round;transition:stroke .8s, stroke-dashoffset .45s ease-out}
+  .root path.fresh{stroke:#6b5238}
+  .gone .root path{stroke:var(--dim)}
+  #up path{fill:none;stroke:var(--reed);stroke-width:1.6;stroke-linecap:round;transition:stroke .8s, stroke-dashoffset .45s ease-out}
+  .gone #up path{stroke:var(--dim)}
+  .lbl{fill:#6a6b70;font-size:13px;text-anchor:middle;pointer-events:none;transition:fill .8s}
+  /* the leaning itself: the one living thing */
+  #meet{transition:opacity 1.2s, transform 1.4s}
+  #meet .core{fill:var(--glow);transition:r .9s cubic-bezier(.2,.8,.3,1)}
+  #meet{--breath:3.2s;--depth:1.3}
+  #meet .halo{fill:var(--ember);opacity:.22;animation:breathe var(--breath) ease-in-out infinite;transition:r .9s cubic-bezier(.2,.8,.3,1)}
+  #meet .halo2{fill:var(--ember);opacity:.08;animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1)}
+  @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(var(--depth))}}
+  #meet .halo,#meet .halo2{transform-box:fill-box;transform-origin:center}
+  .gone #meet{opacity:0}
+  .gone #reedNodes .node circle{fill:var(--dim)}
+  .gone #reedNodes .node text{fill:#3a3b3f}
+  #reedNodes .node text{font-size:11px}
+  #reedNodes .node.old circle{fill:#2e2f33}
+  .name{font-size:10px;fill:#d8d3c8;opacity:0;transition:opacity .5s}
+  .name.show{opacity:1}
+  #L.fall{transform-origin:top center;transform:rotate(38deg)}
+  #R.fall{transform-origin:top center;transform:rotate(-38deg)}
+  /* twigs: 촉 수 애 취 유 */
+  .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s,stroke-dashoffset .38s ease-out}
+  .twig.was{stroke:#6b5238}
+  .node circle{fill:var(--dim);transition:fill .5s,opacity .6s}
+  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s}
+  .node.hid circle,.node.hid text{opacity:0}
+  .node.lit circle{fill:var(--glow)}
+  .node.lit text{fill:var(--ink)}
+  .node.was circle{fill:var(--ember)}
+  .node.was text{fill:#a89a86}
+  .tg{transition:opacity 1.4s}
+  .tg.spent .twig{stroke:#2e2f33}
+  .tg.spent .node circle{fill:#2e2f33}
+  .tg.spent .node text{fill:#45464b}
+  .gone .tg{opacity:0}
+  /* 유 and the fire answer each other */
+  #meet .core{transform-box:fill-box;transform-origin:center}
+  #meet.flare .core{animation:flare .9s cubic-bezier(.1,.9,.3,1)}
+  #meet.flare .halo{animation:flareHalo .9s cubic-bezier(.1,.9,.3,1)}
+  #meet.flare .halo2{animation:flareHalo2 .9s cubic-bezier(.1,.9,.3,1)}
+  @keyframes flare{0%{transform:scale(1)}18%{transform:scale(1.3)}100%{transform:scale(1)}}
+  @keyframes flareHalo{0%{opacity:.22;transform:scale(1)}18%{opacity:.5;transform:scale(1.3)}100%{opacity:.22;transform:scale(1)}}
+  @keyframes flareHalo2{0%{opacity:.08;transform:scale(1)}18%{opacity:.2;transform:scale(1.3)}100%{opacity:.08;transform:scale(1)}}
+  .node.yu circle{transform-box:fill-box;transform-origin:center;animation:yuPulse 1.1s cubic-bezier(.2,.8,.3,1)}
+  @keyframes yuPulse{0%{transform:scale(1)}30%{transform:scale(1.4)}100%{transform:scale(1)}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<div id="hint">갈대 하나를 빼 보세요</div>
+<div id="stage"><svg id="svg" viewBox="0 0 800 620" preserveAspectRatio="xMidYMid meet">
+  <line x1="220" y1="540" x2="580" y2="540" stroke="#1e1f22" stroke-width="1"/>
+  <g id="pair">
+    <g id="twigs"></g>
+    <g id="L" class="root"></g>
+    <g id="R" class="root"></g>
+    <g id="up"></g>
+    <g id="meet">
+      <circle class="halo2" cx="400" cy="300" r="30"/>
+      <circle class="halo" cx="400" cy="300" r="15"/>
+      <circle class="core" cx="400" cy="300" r="4"/>
+    </g>
+    <g id="reedNodes"></g>
+    <g id="names"></g>
+  </g>
+</svg></div>
+<div id="line"></div>
+<script>
+const $=id=>document.getElementById(id);
+const line=$('line'), pair=$('pair'), L=$('L'), R=$('R'), hint=$('hint'), twigsG=$('twigs'), meet=$('meet');
+const ns='http://www.w3.org/2000/svg';
+const el=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const R_=(a,b)=>a+Math.random()*(b-a);
+const mark=(n,c)=>{n.classList.remove('lit','was','hid');if(c)n.classList.add(c);};
+const MEET={x:400,y:250};
+const LOOP=['촉','수','애','취','유'];
+const STEP=420, MAXLEVEL=40;
+let fallen=false, level=0, busy=false, ALL=[];
+let timers=new Set();
+const later=(f,ms)=>{const t=setTimeout(()=>{timers.delete(t);f();},ms);timers.add(t);return t;};
+const clearAll=()=>{timers.forEach(clearTimeout);timers.clear();};
+
+// ---- the leaning grows: fire larger, reeds thicker ----
+// the two reeds lean together at the top; below the leaning they grow DOWN like roots,
+// one straight segment at a time, and segments fork into further segments
+const reedNodesG=$('reedNodes');
+const TOP=250, BASE=540;
+let roots={L:null,R:null};
+function resetRoots(){
+  L.innerHTML=''; R.innerHTML=''; reedNodesG.innerHTML='';
+  roots={L:{g:L,tips:[{x:400,y:TOP,a:Math.PI/2+(-0.55),kids:0}],nodes:[],segs:[],name:'식',side:-1,first:true},
+         R:{g:R,tips:[{x:400,y:TOP,a:Math.PI/2+(0.55),kids:0}],nodes:[],segs:[],name:'명색',side:1,first:true}};
+}
+function segment(root,from,a,len){
+  const x2=from.x+Math.cos(a)*len, y2=from.y+Math.sin(a)*len;
+  const p=el('path',{d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`});
+  root.g.appendChild(p);
+  const Ln=p.getTotalLength();
+  p.style.transition='none'; p.style.strokeDasharray=Ln; p.style.strokeDashoffset=Ln; p.getBoundingClientRect(); p.style.transition='';
+  const ng=el('g',{class:'node hid'});
+  ng.appendChild(el('circle',{cx:x2,cy:y2,r:2.6}));
+  reedNodesG.appendChild(ng);
+  const tip={x:x2,y:y2,a,kids:0};
+  root.nodes.push(tip);
+  return {p,ng,tip};
+}
+// grow one step of a root: from a tip, extend; sometimes fork into two
+function growRoot(key,even){
+  const root=roots[key];
+  const live=root.tips.filter(t=>t.y<BASE-7 && t.x>60 && t.x<740);
+  if(!live.length) return [];
+  if(even){                                                  // one stalk, uniform step, no fork
+    const from=live[live.length-1];
+    const seg=segment(root,from,from.a,14);
+    root.tips.splice(root.tips.indexOf(from),1); root.tips.push(seg.tip); from.kids++;
+    return [seg];
+  }
+  // after a while the root stops reaching and thickens instead: shorter, more forks, filling in
+  const dense = Math.min(1, Math.max(0,(level-8)/8));
+  // like a root: new growth comes from a tip, or as a lateral from anywhere along an older segment
+  const inner=root.nodes.filter(n=>n.kids<2 && n.y<BASE-7 && n.x>60 && n.x<740 && !live.includes(n));
+  let from;
+  if(inner.length && Math.random()<0.35+dense*0.25) from=inner[Math.floor(Math.random()*inner.length)];
+  else from = Math.random()<(0.65-dense*0.5) ? live[live.length-1] : live[Math.floor(Math.random()*live.length)];
+  const lateral=!live.includes(from);
+  const fork = false;                                       // one segment per step
+  const out=[];
+  const n = 1;
+  for(let j=0;j<n;j++){
+    const dir = fork ? (j?1:-1) : (Math.random()<0.5?1:-1);
+    let a = Math.PI/2 + dir*R_(0.25,1.35+dense*0.5);       // downward, spreading wide; wider still when dense
+    a = a*0.75 + from.a*0.25;                                 // some memory of the parent's lean
+    a = Math.max(Math.PI/2-1.25, Math.min(Math.PI/2+1.25, a)); // roots never turn upward
+    const seg=segment(root,from,a,R_(10,17)*(1-dense*0.5)*(lateral?0.8:1));
+    out.push(seg);
+    root.tips.push(seg.tip);
+    from.kids++;
+  }
+  if(!lateral) root.tips.splice(root.tips.indexOf(from),1);   // a tip that grew on is no longer a tip
+  return out;
+}
+const namesG=$('names');
+function showName(root,seg){
+  // find the emptiest spot around the new tip: away from other root nodes, twig nodes and the fire
+  const pts=[...roots.L.nodes,...roots.R.nodes,...ALL,MEET].filter(q=>q!==seg.tip);
+  let best=null;
+  for(let k=0;k<12;k++){
+    const a=k/12*Math.PI*2, r=13;
+    const x=seg.tip.x+Math.cos(a)*r, y=seg.tip.y+Math.sin(a)*r+3;
+    let m=1e9; for(const q of pts){ const d=Math.hypot(x-q.x,y-q.y); if(d<m) m=d; }
+    if(x<30||x>770) m=0;
+    if(!best||m>best.m) best={x,y,m,a};
+  }
+  const t=el('text',{class:'name',x:best.x,y:best.y});
+  t.setAttribute('text-anchor', Math.cos(best.a)>0.3?'start':Math.cos(best.a)<-0.3?'end':'middle');
+  t.textContent=root.name; namesG.appendChild(t);
+  later(()=>t.classList.add('show'),320);
+  later(()=>t.classList.remove('show'),1500); later(()=>t.remove(),2100);
+}
+function ageRoot(root){ root.g.querySelectorAll('path.fresh').forEach(p=>p.classList.remove('fresh')); root.segs.forEach(sg=>{ mark(sg.ng,'was'); sg.ng.classList.add('old'); }); }
+function drawSeg(root,seg){ ageRoot(root); seg.p.classList.add('fresh'); seg.p.style.strokeDashoffset=0; later(()=>mark(seg.ng,'lit'),300); root.segs.push(seg); }
+const upG=$('up');
+const RISE=4, TOPMIN=70;
+function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
+// the pair also grows upward one step: 식 reaches up, then 명색, and they meet again a little higher
+function growUp(done){
+  if(MEET.y-RISE<TOPMIN){ done(); return; }
+  const from={x:MEET.x,y:MEET.y};
+  const to={x:MEET.x+R_(-1.5,1.5), y:MEET.y-RISE};
+  // one straight segment rising from the meeting point
+  const p=el('path',{d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
+  upG.appendChild(p);
+  const Ln=p.getTotalLength(); p.style.transition='none'; p.style.strokeDasharray=Ln; p.style.strokeDashoffset=Ln; p.getBoundingClientRect(); p.style.transition='';
+  p.style.strokeDashoffset=0;
+  later(()=>{ MEET.x=to.x; MEET.y=to.y; placeMeet(); later(done,450); },380);
+}
+function setLevel(n){
+  level=Math.min(MAXLEVEL,Math.max(0,n));
+  placeMeet();
+  const lv=Math.min(level,14);
+  meet.querySelector('.core').setAttribute('r',4+lv*0.3);
+  meet.querySelector('.halo').setAttribute('r',15+lv*1.4);
+  meet.querySelector('.halo2').setAttribute('r',30+lv*2.6);
+  const k=Math.min(1,level/14);
+  meet.style.setProperty('--breath',(3.2-k*2.3).toFixed(2)+'s');
+  meet.style.setProperty('--depth',(1.3-k*0.2).toFixed(3));
+}
+// the pair grows one step down: 식 root, then 명색 root
+function growPair(done){
+  const even = level<1;
+  const a=growRoot('L',even);
+  a.forEach(sg=>drawSeg(roots.L,sg)); a.forEach(sg=>showName(roots.L,sg)); line.textContent='명색을 조건으로 식이 있다';
+  later(()=>{
+    a.forEach(sg=>mark(sg.ng,'was'));
+    const b=growRoot('R',even); b.forEach(sg=>drawSeg(roots.R,sg)); b.forEach(sg=>showName(roots.R,sg)); line.textContent='식을 조건으로 명색이 있다';
+    later(()=>{ b.forEach(sg=>mark(sg.ng,'was')); setLevel(level+1); growUp(done); },STEP);
+  },STEP);
+}
+function buildReeds(){
+  resetRoots();
+  // the first segment of each, already there: the leaning
+  const a=growRoot('L',true), b=growRoot('R',true);
+  a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
+  [...a,...b].forEach(sg=>{ sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
+}
+buildReeds(); setLevel(0);
+
+// ---- twigs off the leaning ----
+function grow(p){
+  // hide the whole twig instantly (no transition), then let later growth animate
+  const Ln=p.getTotalLength();
+  p.style.transition='none';
+  p.style.strokeDasharray=Ln; p.style.strokeDashoffset=Ln;
+  p.getBoundingClientRect();
+  p.style.transition='';
+  return Ln;
+}
+function clearance(x,y,a,len){
+  let m=1e9;
+  for(let t=0.3;t<=1.001;t+=0.35){
+    const px=x+Math.cos(a)*len*t, py=y+Math.sin(a)*len*t;
+    if(px<40||px>760||py<20) return 0;
+    for(const q of ALL){ const d=Math.hypot(px-q.x,py-q.y); if(d<m) m=d; }
+  }
+  return m;
+}
+function sprout(){
+  // 촉 arises at the being: every twig starts at the meeting point
+  const len=R_(95,125);
+  let best=null;
+  for(let k=0;k<18;k++){
+    const a=-Math.PI/2+R_(-1.5,1.5);
+    const c=clearance(MEET.x,MEET.y,a,len);
+    if(!best||c>best.c) best={a,c};
+  }
+  if(!best) return null;
+  const g=el('g',{class:'tg'}); twigsG.appendChild(g);
+  const x2=MEET.x+Math.cos(best.a)*len, y2=MEET.y+Math.sin(best.a)*len;
+  const b=best.a+R_(-.4,.4), cx=MEET.x+Math.cos(b)*len*.5, cy=MEET.y+Math.sin(b)*len*.5;
+  const p=el('path',{class:'twig',d:`M${MEET.x} ${MEET.y} Q${cx} ${cy} ${x2} ${y2}`}); g.appendChild(p);
+  const Ln=grow(p);
+  const nodes=LOOP.map((n,i)=>{
+    const t=p.getPointAtLength(Ln*(i+1)/LOOP.length);
+    const ng=el('g',{class:'node hid'});
+    ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:3.6}));
+    const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx); g.appendChild(ng);
+    ALL.push({x:t.x,y:t.y});
+    return {ng,name:n,x:t.x,y:t.y};
+  });
+  return {g,p,nodes,Ln};
+}
+function burn(tw,i,prev){
+  if(fallen) return;
+  const n=tw.nodes[i];
+  if(i===0) tw.p.classList.add('was');
+  // the twig grows out to this node, then the node appears
+  tw.p.style.strokeDashoffset=tw.Ln*(1-(i+1)/tw.nodes.length);
+  mark(n.ng,'lit'); line.textContent=`${prev}을 조건으로 ${n.name}이 있다`;
+  if(n.name==='유'){
+    // 유 and the leaning answer each other: both flare, a thread runs between them for a moment
+    n.ng.classList.add('yu');
+    meet.classList.remove('flare'); meet.getBoundingClientRect(); meet.classList.add('flare');
+    later(()=>meet.classList.remove('flare'),950);
+    // and in the same moment the pair begins to grow
+    growPair(()=>later(cycle, 900-Math.round(Math.min(1,level/14)*650)));
+  }
+  later(()=>{
+    mark(n.ng,'was');
+    if(i<tw.nodes.length-1){ burn(tw,i+1,n.name); return; }
+    feed(tw);
+  },STEP);
+}
+// at 유 the twig ceases; the leaning has grown by what was craved
+const MAXSPENT=40;
+function feed(tw){
+  tw.g.classList.add('spent');                          // the event is over; it stays as a grey trace
+  const spent=[...twigsG.querySelectorAll('.tg.spent')];
+  if(spent.length>MAXSPENT){ spent.shift().remove(); ALL=[]; twigsG.querySelectorAll('.node circle').forEach(c=>ALL.push({x:+c.getAttribute('cx'),y:+c.getAttribute('cy')})); }
+  // the older the trace, the fainter
+  const n=spent.length;
+  // newest 0.75, then fading to 0.1 within three steps, and staying there
+  spent.forEach((g,i)=>{ const age=Math.min(1,(n-1-i)/3); g.style.opacity=(0.75-age*0.65).toFixed(2); });
+}
+function cycle(){
+  if(fallen) return;
+  const tw=sprout();
+  if(!tw){ later(cycle,1200); return; }
+  later(()=>burn(tw,0,'명색'),300);
+}
+
+// ---- pulling one reed away ----
+function pull(which){
+  if(fallen) return;
+  fallen=true; clearAll(); hint.style.opacity=0;
+  const gone=which==='L'?L:R, other=which==='L'?R:L;
+  pair.classList.add('gone');
+  line.textContent='기댐이 사라진다';
+  gone.classList.add('fall');
+  setTimeout(()=>{ other.classList.add('fall'); line.textContent= which==='L'?'식이 없으면 명색도 없다':'명색이 없으면 식도 없다'; },700);
+  setTimeout(()=>{
+    twigsG.innerHTML=''; ALL=[]; upG.innerHTML=''; namesG.innerHTML=''; MEET.x=400; MEET.y=TOP; buildReeds(); setLevel(0);
+    L.classList.remove('fall'); R.classList.remove('fall');
+    line.textContent='어느 쪽이 먼저가 아니다';
+    setTimeout(()=>{ pair.classList.remove('gone'); line.textContent='기대는 순간 둘이 있다'; setTimeout(()=>{fallen=false;cycle();},2000); },1700);
+  },4200);
+}
+L.addEventListener('click',()=>pull('L'));
+R.addEventListener('click',()=>pull('R'));
+line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
+later(cycle,2200);
+</script>
