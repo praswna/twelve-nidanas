@@ -68,6 +68,8 @@
   .tg.spent .node circle{fill:#2e2f33}
   .tg.spent .node text{fill:#45464b}
   .gone .tg{opacity:0}
+  /* the last 유 of a life outlasts the fire: it is what conditions the next birth */
+  .node.linger circle{fill:var(--ember)} .node.linger text{fill:#a89a86}
   /* 유 and the fire answer each other */
   #meet .core{transform-box:fill-box;transform-origin:center}
   .node.yu circle{transform-box:fill-box;transform-origin:center;animation:yuPulse 1.1s cubic-bezier(.2,.8,.3,1)}
@@ -109,7 +111,7 @@ const MEET={x:400,y:250};
 const LOOP=['촉','수','애','취','유'];
 const STEP=420, MAXLEVEL=40;
 let fallen=false, level=0, busy=false, ALL=[];
-let LIFE=0, age=0;               // this life's span (in 유 cycles) and how many it has lived
+let LIFE=0, age=0, lastTwig=null, lingerYu=null;               // this life's span (in 유 cycles) and how many it has lived
 let timers=new Set();
 const later=(f,ms)=>{const t=setTimeout(()=>{timers.delete(t);f();},ms);timers.add(t);return t;};
 const clearAll=()=>{timers.forEach(clearTimeout);timers.clear();};
@@ -336,7 +338,7 @@ function burn(tw,i,prev){
   mark(n.ng,'lit'); line.textContent=says(prev,n.name);
   if(n.name==='유'){
     // 유 and the leaning answer each other: both flare, a thread runs between them for a moment
-    n.ng.classList.add('yu');
+    n.ng.classList.add('yu'); lastTwig=tw;
     flarePulse();                                        // 유가 들어와 기댐이 한 번 번쩍임
     // the 유 sentence holds one beat, then the pair grows
     later(()=>growPair(afterGrowth), STEP);
@@ -382,6 +384,8 @@ function die(){
   setLife(0);
   ageRoot(roots.L); ageRoot(roots.R);
   upG.querySelectorAll('path').forEach(p=>p.classList.add('dead'));
+  // the 유 that led here stays lit through the dark, above everything, until the next life begins
+  if(lastTwig){ lingerYu=lastTwig.nodes[LOOP.length-1].ng; twigsG.appendChild(lingerYu); lingerYu.classList.add('linger'); }
   later(()=>{ line.textContent='노사'; },1600);
   later(birth,3400);
 }
@@ -394,6 +398,8 @@ function birth(){
   const o=pool.length?pool[Math.floor(Math.random()*Math.min(pool.length,Math.max(3,pool.length>>1)))]:{x:MEET.x,y:MEET.y};
   o.kids=(o.kids||0)+1;
   line.textContent=says('유','생');
+  // as the new pair takes root, that 유 is spent: it goes out in the same instant
+  if(lingerYu){ lingerYu.classList.remove('linger'); lastTwig.g.appendChild(lingerYu); lingerYu=null; }
   MEET.x=o.x; MEET.y=o.y; upA=-Math.PI/2;
   buildReeds({x:o.x,y:o.y}); setLevel(0); newLife();
   later(cycle,1800);
