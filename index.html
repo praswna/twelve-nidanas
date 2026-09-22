@@ -37,8 +37,10 @@
   #meet .halo2{fill:var(--ember);opacity:calc(.08*var(--life,1));animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1)}
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(var(--depth))}}
   /* the pulse is a colour swing, never translucency: nothing shows through a lit line or dot */
-  @keyframes chainStroke{0%,100%{stroke:#7a5734}50%{stroke:#e8a25a}}
-  @keyframes chainFill{0%,100%{fill:#7a5734}50%{fill:#e8a25a}}
+  /* everything that is this life's body fades with --life (faculties, the pair, the stalk); craving does not */
+  #pair,#meet{--lifepct:calc(var(--life,1)*100%)}
+  @keyframes chainStroke{0%,100%{stroke:color-mix(in srgb,#7a5734 var(--lifepct),var(--bg))}50%{stroke:color-mix(in srgb,#e8a25a var(--lifepct),var(--bg))}}
+  @keyframes chainFill{0%,100%{fill:color-mix(in srgb,#7a5734 var(--lifepct),var(--bg))}50%{fill:color-mix(in srgb,#e8a25a var(--lifepct),var(--bg))}}
   #meet .halo,#meet .halo2{transform-box:fill-box;transform-origin:center}
   .gone #meet{opacity:0}
   .gone .nodes .node circle{fill:var(--dim)}
@@ -50,14 +52,17 @@
   .name.show{opacity:1}
   /* twigs: 촉 수 애 취 유 */
   .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s,stroke-dashoffset .38s ease-out}
-  .twig.was{stroke:#6b5238}
+  .twig.was{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
   .node circle{fill:var(--dim);transition:fill .5s,opacity .6s}
   .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s}
   .node.hid circle,.node.hid text{opacity:0}
-  .node.lit circle{fill:var(--glow)}
-  .node.lit text{fill:var(--ink)}
-  .node.was circle{fill:var(--ember)}
-  .node.was text{fill:#a89a86}
+  .node.lit circle{fill:color-mix(in srgb,var(--glow) var(--lifepct),var(--bg))}
+  .node.lit text{fill:color-mix(in srgb,var(--ink) var(--lifepct),var(--bg))}
+  .node.was circle{fill:color-mix(in srgb,var(--ember) var(--lifepct),var(--bg))}
+  .node.was text{fill:color-mix(in srgb,#a89a86 var(--lifepct),var(--bg))}
+  /* 애·취·유 do not age: craving and what it piles up stay bright to the end */
+  .node.tanha.lit circle{fill:var(--glow)} .node.tanha.lit text{fill:var(--ink)}
+  .node.tanha.was circle{fill:var(--ember)} .node.tanha.was text{fill:#a89a86}
   .tg{transition:opacity 1.4s}
   .tg.spent .twig{stroke:#2e2f33}
   .tg.spent .node circle{fill:#2e2f33}
@@ -307,7 +312,7 @@ function sprout(){
   const Ln=grow(p);
   const nodes=LOOP.map((n,i)=>{
     const t=p.getPointAtLength(Ln*(i+1)/LOOP.length);
-    const ng=el('g',{class:'node hid'});
+    const ng=el('g',{class:'node hid'+(i>=2?' tanha':'')});   // 애·취·유
     ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:3.6}));
     const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx); g.appendChild(ng);
     ALL.push({x:t.x,y:t.y});
@@ -353,20 +358,21 @@ function flarePulse(){
   meet.querySelector('.halo').animate([{opacity:0},{opacity:.28,offset:.18},{opacity:0}],{duration:dur,easing:ease,composite:'add'});
   meet.querySelector('.halo2').animate([{opacity:0},{opacity:.12,offset:.18},{opacity:0}],{duration:dur,easing:ease,composite:'add'});
 }
+function setLife(v){ meet.style.setProperty('--life',v); pair.style.setProperty('--life',v); }
 function newLife(){
-  LIFE=Math.round(R_(10,24)); age=0; meet.style.setProperty('--life',1);
+  LIFE=Math.round(R_(10,24)); age=0; setLife(1);
 }
 function afterGrowth(){
   age++;
   // fed or not, the fire ages: brightness is life left, size is what craving has piled up
-  meet.style.setProperty('--life',Math.max(0.12,1-age/LIFE).toFixed(3));
+  setLife(Math.max(0.12,1-age/LIFE).toFixed(3));
   if(age>=LIFE){ die(); return; }
   later(cycle, 900-Math.round(Math.min(1,level/14)*650));
 }
 // 노사: the fire goes out; one reed cannot stand without the other, so both are left as grey traces
 function die(){
   line.textContent=says('생','노사');
-  meet.style.setProperty('--life',0);
+  setLife(0);
   ageRoot(roots.L); ageRoot(roots.R);
   upG.querySelectorAll('path').forEach(p=>p.classList.add('dead'));
   later(()=>{ line.textContent='노사'; },1600);
