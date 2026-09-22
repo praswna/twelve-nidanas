@@ -84,7 +84,7 @@
     <g id="meet">
       <circle class="halo2" cx="400" cy="300" r="30"/>
       <circle class="halo" cx="400" cy="300" r="15"/>
-      <circle class="core" cx="400" cy="300" r="4"/>
+      <circle class="core" cx="400" cy="300" r="3.6"/>
     </g>
   </g>
 </svg>
@@ -244,7 +244,7 @@ function setLevel(n){
   level=Math.min(MAXLEVEL,Math.max(0,n));
   placeMeet();
   const lv=Math.min(level,14);
-  meet.querySelector('.core').setAttribute('r',4+lv*0.3);
+  // the core is a node like any other; only the halos grow with what craving piles up
   meet.querySelector('.halo').setAttribute('r',15+lv*1.4);
   meet.querySelector('.halo2').setAttribute('r',30+lv*2.6);
   const k=Math.min(1,level/14);
