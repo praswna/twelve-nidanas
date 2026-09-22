@@ -217,15 +217,22 @@ function syncPulse(els){
   });
 }
 function lightChain(seg){
-  const els=[], lit=[]; let s=seg;
-  while(s){ s.p.classList.add('fresh'); s.ng.classList.add('onfire'); s.age=-1; s.p.style.stroke=''; s.ng.querySelector('circle').style.fill=''; lit.push(s); els.push(s.p, s.ng.querySelector('circle')); s=s.from&&s.from.seg; }
-  // nothing spent may cover the lit path: its lines and nodes live in their own groups above the grey ones
-  lit.reverse().forEach(sg=>{ litPathsG.appendChild(sg.p); litNodesG.appendChild(sg.ng); });
-  // the stalk above the leaning is part of the same lit path: keep it in the same phase
-  els.push(...upG.querySelectorAll('path'));
-  syncPulse(els);
+  // the path from the leaning down to the new tip
+  const chain=[]; for(let s=seg; s; s=s.from&&s.from.seg) chain.push(s);
+  chain.reverse();
+  const els=[];
+  // relit one segment at a time, from the leaning out to the newest — quickly, like a fuse
+  chain.forEach((sg,i)=>later(()=>{
+    sg.p.classList.add('fresh'); sg.ng.classList.add('onfire');
+    sg.age=-1; sg.p.style.stroke=''; sg.ng.querySelector('circle').style.fill='';
+    // nothing spent may cover the lit path: its lines and nodes live in their own groups above the grey ones
+    litPathsG.appendChild(sg.p); litNodesG.appendChild(sg.ng);
+    els.push(sg.p, sg.ng.querySelector('circle'));
+    if(i===chain.length-1){ els.push(...upG.querySelectorAll('path')); syncPulse(els); }
+  }, i*RELIT));
 }
-function drawSeg(root,seg){ ageRoot(root); litPathsG.appendChild(seg.p); seg.p.classList.add('fresh'); syncPulse([seg.p]); seg.p.getBoundingClientRect(); seg.p.style.strokeDashoffset=0; later(()=>lightChain(seg),300); root.segs.push(seg); }
+const RELIT=38;                  // ms between one segment catching and the next
+function drawSeg(root,seg){ ageRoot(root); seg.p.style.strokeDashoffset=0; later(()=>lightChain(seg),120); root.segs.push(seg); }
 const upG=$('up');
 const RISE=6;
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
