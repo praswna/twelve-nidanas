@@ -45,7 +45,8 @@
   .gone #meet{opacity:0}
   .gone .nodes .node circle{fill:var(--dim)}
   .gone .nodes .node text{fill:#3a3b3f}
-  .nodes .node text{font-size:11px}
+  .nodes .node text{font-size:10px;fill:#45464b}
+  .nodes .node.onfire text{fill:var(--ink);transition:fill 1.1s}
   .nodes .node.old circle{fill:#2e2f33}
   .nodes .node.onfire circle{fill:#e8a25a;transition:fill 1.1s;animation:chainFill var(--breath,3.2s) ease-in-out infinite}
   .name{font-size:10px;fill:#d8d3c8;opacity:0;transition:opacity .5s}
@@ -135,6 +136,7 @@ function segment(root,from,a,len){
   p.style.transition='none'; p.style.strokeDasharray=Ln; p.style.strokeDashoffset=Ln; p.getBoundingClientRect(); p.style.transition='';
   const ng=el('g',{class:'node hid'});
   ng.appendChild(el('circle',{cx:x2,cy:y2,r:2.6}));
+  const tx=el('text',{x:x2,y:y2-7}); tx.textContent=root.name; ng.appendChild(tx);
   reedNodesG.appendChild(ng);
   const tip={x:x2,y:y2,a,kids:0};
   root.nodes.push(tip); MASS.push(tip);
@@ -197,12 +199,12 @@ function showName(root,seg){
 }
 // spent 식·명색 fade like spent twigs: 0.75 when just spent, down to 0.1 after four steps, and staying there
 // fade by colour, not by opacity, so an overlapping line and dot stay one flat grey (as the twigs do)
-const FADE=(age)=>{ const k=Math.max(0.1,0.75-age*(0.65/4)); const mix=(a,b)=>Math.round(b+(a-b)*k);
-  return `rgb(${mix(0x2e,0x0c)},${mix(0x2f,0x0d)},${mix(0x33,0x0f)})`; };
+const FADE=(age,base=[0x2e,0x2f,0x33])=>{ const k=Math.max(0.1,0.75-age*(0.65/4)); const bg=[0x0c,0x0d,0x0f];
+  return `rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`; };
 function ageRoot(root){ root.segs.forEach(sg=>{
   sg.p.classList.remove('fresh'); if(sg.p.parentNode===litPathsG) root.g.appendChild(sg.p);
   mark(sg.ng,'was'); sg.ng.classList.add('old'); sg.ng.classList.remove('onfire'); if(sg.ng.parentNode===litNodesG) reedNodesG.appendChild(sg.ng);
-  sg.age=(sg.age??-1)+1; const c=FADE(sg.age); sg.p.style.stroke=c; sg.ng.querySelector('circle').style.fill=c;
+  sg.age=(sg.age??-1)+1; const c=FADE(sg.age); sg.p.style.stroke=c; sg.ng.querySelector('circle').style.fill=c; sg.ng.querySelector('text').style.fill=FADE(sg.age,[0x45,0x46,0x4b]);
 }); }
 // make elements' pulse throb in phase with the leaning's breath
 // (only once their own animation has started; an unstarted one would be re-timed by the browser)
@@ -226,7 +228,7 @@ function lightChain(seg){
   // relit one segment at a time, from the leaning out to the newest — quickly, like a fuse
   chain.forEach((sg,i)=>later(()=>{
     sg.p.classList.add('fresh'); sg.ng.classList.add('onfire');
-    sg.age=-1; sg.p.style.stroke=''; sg.ng.querySelector('circle').style.fill='';
+    sg.age=-1; sg.p.style.stroke=''; sg.ng.querySelector('circle').style.fill=''; sg.ng.querySelector('text').style.fill='';
     // nothing spent may cover the lit path: its lines and nodes live in their own groups above the grey ones
     litPathsG.appendChild(sg.p); litNodesG.appendChild(sg.ng);
     els.push(sg.p, sg.ng.querySelector('circle'));
@@ -269,10 +271,10 @@ function setLevel(n){
 function growPair(done){
   const even = level<1;
   const a=growRoot('L',even);
-  a.forEach(sg=>drawSeg(roots.L,sg)); a.forEach(sg=>showName(roots.L,sg)); line.textContent='명색을 조건으로 식이 있다';
+  a.forEach(sg=>drawSeg(roots.L,sg)); line.textContent='명색을 조건으로 식이 있다';
   later(()=>{
     a.forEach(sg=>mark(sg.ng,'was'));
-    const b=growRoot('R',even); b.forEach(sg=>drawSeg(roots.R,sg)); b.forEach(sg=>showName(roots.R,sg)); line.textContent='식을 조건으로 명색이 있다';
+    const b=growRoot('R',even); b.forEach(sg=>drawSeg(roots.R,sg)); line.textContent='식을 조건으로 명색이 있다';
     later(()=>{ b.forEach(sg=>mark(sg.ng,'was')); setLevel(level+1); growUp(done); },STEP);
   },STEP);
 }
