@@ -1,0 +1,170 @@
+<title>연기의 나무</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500&display=swap">
+<style>
+  :root{
+    --bg:#0c0d0f; --ink:#d8d3c8; --dim:#3a3b3f; --dry:#232426;
+    --ember:#c98a4a; --glow:#ffcf8a;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Noto Serif KR","Apple SD Gothic Neo",serif;font-weight:300;
+    display:flex;flex-direction:column;padding-inline:16px;box-sizing:border-box}
+  #stage{flex:1;min-height:0}
+  svg{width:100%;height:100%;display:block}
+  #line{height:64px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;letter-spacing:.06em;opacity:.85;text-align:center}
+  #hint{position:fixed;top:14px;left:0;right:0;text-align:center;font-size:12px;
+    letter-spacing:.2em;color:#6a6b70;transition:opacity 1.5s}
+  .node{cursor:pointer}
+  .node circle{fill:var(--dim);transition:fill .5s}
+  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s}
+  .node.lit circle{fill:var(--glow)}
+  .node.lit text{fill:var(--ink)}
+  .node.was circle{fill:var(--ember)}
+  .node.was text{fill:#a89a86}
+  .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s}
+  .twig.was,#trunk.was{stroke:#6b5238}
+  .dry{transition:transform 2.4s ease-in;transform-box:fill-box;transform-origin:center}
+  .dry.knot{transform:scale(.82)}
+  .dry .twig{stroke:var(--dry);stroke-width:1.4}
+  .dry .node circle{fill:var(--dry)}
+  .dry .node text{fill:#36373a}
+  .dry .node{cursor:default}
+  #trunk{stroke:var(--dim);stroke-width:1.1;fill:none}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<div id="hint">마디를 누르면 불이 붙습니다</div>
+<div id="stage"><svg id="svg" viewBox="0 0 800 620" preserveAspectRatio="xMidYMax meet">
+  <g id="dry"></g>
+  <path id="trunk" d="M400 600 C 388 540, 416 470, 402 400 S 384 340, 396 300"/>
+  <g id="trunkNodes"></g>
+  <g id="live"></g>
+</svg></div>
+<div id="line"></div>
+<script>
+const HEAD=['식','명색','육입'];            // once, where the branch buds (생)
+const LOOP=['촉','수','애','취','유'];        // one twig; 유 seeds new twigs
+const STEP=480, PAUSE=2600, MAXDRY=6, SAFETY=40;
+const svg=document.getElementById('svg'), live=document.getElementById('live'),
+ dry=document.getElementById('dry'), line=document.getElementById('line'),
+ hint=document.getElementById('hint'), trunkG=document.getElementById('trunkNodes'),
+ trunkPath=document.getElementById('trunk');
+const ns='http://www.w3.org/2000/svg';
+const el=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
+const R=(a,b)=>a+Math.random()*(b-a);
+const later=(f,ms)=>setTimeout(f,ms);
+let life=null, side=1, timers=new Set();
+const wrap=(f,ms)=>{const t=setTimeout(()=>{timers.delete(t);f();},ms);timers.add(t);return t;};
+const clearAll=()=>{timers.forEach(clearTimeout);timers.clear();};
+
+const TL=trunkPath.getTotalLength();
+const onTrunk=y=>{ let best=null; for(let d=0;d<=TL;d+=2){const q=trunkPath.getPointAtLength(d); if(!best||Math.abs(q.y-y)<Math.abs(best.y-y)) best=q;} return best; };
+const TRUNK=[['무명',596],['행',562]].map(([n,y])=>{
+  const pt=onTrunk(y);
+  const ng=el('g',{class:'node'});
+  ng.appendChild(el('circle',{cx:pt.x,cy:pt.y,r:4.5}));
+  const tx=el('text',{x:pt.x+13,y:pt.y+4}); tx.setAttribute('text-anchor','start'); tx.textContent=n; ng.appendChild(tx);
+  trunkG.appendChild(ng);
+  return {ng,name:n};
+});
+TRUNK.forEach(t=>t.ng.addEventListener('click',()=>{ if(life) restart(); }));
+
+function say(prev,cur){
+  if(!prev) line.textContent='무명이 아직 있다';
+  else if(prev==='유'&&cur==='촉') line.textContent='유가 다시 촉을 낳는다';
+  else if(cur==='노사') line.textContent='이와 같이 이 모든 괴로움의 덩어리가 일어난다';
+  else line.textContent=`${prev}을 조건으로 ${cur}이 있다`;
+}
+const mark=(n,c)=>{n.classList.remove('lit','was');if(c)n.classList.add(c);};
+
+function twig(g,x,y,a,len,labels){
+  const x2=x+Math.cos(a)*len, y2=y+Math.sin(a)*len;
+  const bend=a+R(-.5,.5), cx=x+Math.cos(bend)*len*.5, cy=y+Math.sin(bend)*len*.5;
+  const p=el('path',{class:'twig',d:`M${x} ${y} Q${cx} ${cy} ${x2} ${y2}`});
+  g.appendChild(p);
+  const L=p.getTotalLength(), nodes=[];
+  labels.forEach((n,i)=>{
+    const t=p.getPointAtLength(L*(i+1)/labels.length);
+    const ng=el('g',{class:'node'});
+    ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:4}));
+    const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx);
+    g.appendChild(ng);
+    nodes.push({ng,name:n,x:t.x,y:t.y});
+  });
+  return {p,nodes,x:x2,y:y2,a,depth:0};
+}
+function burn(tw,i,prev){
+  const n=tw.nodes[i];
+  if(i===0) tw.p.classList.add('was');
+  mark(n.ng,'lit'); say(prev,n.name);
+  wrap(()=>{
+    mark(n.ng,'was');
+    if(i<tw.nodes.length-1){ burn(tw,i+1,n.name); return; }
+    if(life.count<SAFETY){
+      const p=Math.max(0, 1-tw.depth*0.13);            // deeper twigs branch less often
+      const k=Math.random()<p*0.5?2:(Math.random()<p?1:0);
+      for(let j=0;j<k;j++) sprout(tw,j===0?1:-1);
+    }
+    next();
+  },STEP);
+}
+function next(){
+  const tw=life.queue.shift();
+  if(tw){ wrap(()=>burn(tw,0,'유'),R(150,400)); return; }
+  // the ripened 업유 sprouts 생, and 생 ends in 노사
+  const tip=twig(life.g,life.cx,life.cy,-Math.PI/2,70,['생','노사']);
+  wrap(()=>{
+    tip.p.classList.add('was');
+    mark(tip.nodes[0].ng,'lit'); say('유','생');
+    wrap(()=>{
+      mark(tip.nodes[0].ng,'was'); mark(tip.nodes[1].ng,'lit'); say('생','노사');
+      wrap(wither,PAUSE);
+    },STEP*1.5);
+  },STEP);
+}
+function sprout(parent,dir){
+  life.count++;
+  life.cx=(life.cx*life.count+parent.x)/(life.count+1);
+  life.cy=(life.cy*life.count+parent.y)/(life.count+1);
+  let a=parent.a+dir*R(0.6,1.6);
+  // pulled back toward the bush's own centre: twigs cross and knot instead of spreading
+  const inward=Math.atan2(life.cy-parent.y, life.cx-parent.x);
+  const pull=Math.min(0.55, 0.15+life.count*0.025);
+  a=a*(1-pull)+inward*pull;
+  const len=R(55,85)*Math.pow(0.95,parent.depth);
+  const ex=parent.x+Math.cos(a)*len, ey=parent.y+Math.sin(a)*len;
+  if(ex<40||ex>760||ey<40){ life.count--; return; }
+  const tw=twig(life.g,parent.x,parent.y,a,len,LOOP); tw.depth=parent.depth+1;
+  life.queue.unshift(tw);
+}
+function burnHead(tw){
+  const go=i=>{ const n=tw.nodes[i]; if(i===0)tw.p.classList.add('was');
+    mark(n.ng,'lit'); say(i===0?'행':tw.nodes[i-1].name,n.name);
+    wrap(()=>{ mark(n.ng,'was'); if(i<tw.nodes.length-1) go(i+1);
+      else { sprout(tw,1); sprout(tw,-1); next(); } },STEP); };
+  go(0);
+}
+function newLife(){
+  side=Math.random()<0.5?1:-1;
+  const g=el('g',{}); live.appendChild(g);
+  const b=onTrunk(R(320,520));
+  life={g,count:0,queue:[],x0:b.x,y0:b.y,cx:400+side*170,cy:220};
+  mark(TRUNK[0].ng,'lit'); say(null);
+  wrap(()=>{ mark(TRUNK[0].ng,'was'); mark(TRUNK[1].ng,'lit'); say('무명','행'); trunkPath.classList.add('was');
+    wrap(()=>{ mark(TRUNK[1].ng,'was');
+      const headTw=twig(g,life.x0,life.y0,side>0?-0.9:-2.25,R(90,120),HEAD);
+      burnHead(headTw);
+    },STEP);
+  },STEP);
+}
+function restart(){ clearAll(); hint.style.opacity=0; wither(true); }
+function wither(fast){
+  line.textContent='';
+  const old=life.g; old.classList.add('dry'); dry.appendChild(old);
+  requestAnimationFrame(()=>old.classList.add('knot'));
+  while(dry.children.length>MAXDRY) dry.removeChild(dry.firstChild);
+  TRUNK.forEach(it=>mark(it.ng)); trunkPath.classList.remove('was');
+  wrap(newLife, fast?300:1400);
+}
+newLife();
+</script>
