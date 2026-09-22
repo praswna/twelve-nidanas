@@ -27,7 +27,7 @@
   /* the stalk above the leaning is always part of the lit path to the fire: same ember, same breath */
   #up path{fill:none;stroke:#e8a25a;stroke-width:1.6;stroke-linecap:round;transition:stroke .8s, stroke-dashoffset .45s ease-out;animation:chainPulse var(--breath,3.2s) ease-in-out infinite}
   .gone #up path{stroke:var(--dim);animation:none}
-  #up path.dead{stroke:#2e2f33;animation:none;opacity:.35}
+  #up path.dead{stroke:#18191c;animation:none}
   .lbl{fill:#6a6b70;font-size:13px;text-anchor:middle;pointer-events:none;transition:fill .8s}
   /* the leaning itself: the one living thing */
   #meet{transition:opacity 1.2s, transform 1.4s}
@@ -186,11 +186,13 @@ function showName(root,seg){
   later(()=>t.classList.remove('show'),1500); later(()=>t.remove(),2100);
 }
 // spent 식·명색 fade like spent twigs: 0.75 when just spent, down to 0.1 after four steps, and staying there
-const FADE=(age)=>Math.max(0.1,0.75-age*(0.65/4)).toFixed(2);
+// fade by colour, not by opacity, so an overlapping line and dot stay one flat grey (as the twigs do)
+const FADE=(age)=>{ const k=Math.max(0.1,0.75-age*(0.65/4)); const mix=(a,b)=>Math.round(b+(a-b)*k);
+  return `rgb(${mix(0x2e,0x0c)},${mix(0x2f,0x0d)},${mix(0x33,0x0f)})`; };
 function ageRoot(root){ root.segs.forEach(sg=>{
   sg.p.classList.remove('fresh'); if(sg.p.parentNode===litPathsG) root.g.appendChild(sg.p);
   mark(sg.ng,'was'); sg.ng.classList.add('old'); sg.ng.classList.remove('onfire'); if(sg.ng.parentNode===litNodesG) reedNodesG.appendChild(sg.ng);
-  sg.age=(sg.age??-1)+1; sg.p.style.opacity=sg.ng.style.opacity=FADE(sg.age);
+  sg.age=(sg.age??-1)+1; const c=FADE(sg.age); sg.p.style.stroke=c; sg.ng.querySelector('circle').style.fill=c;
 }); }
 // make elements' pulse throb in phase with the leaning's breath
 // (only once their own animation has started; an unstarted one would be re-timed by the browser)
@@ -208,7 +210,7 @@ function syncPulse(els){
 }
 function lightChain(seg){
   const els=[], lit=[]; let s=seg;
-  while(s){ s.p.classList.add('fresh'); s.ng.classList.add('onfire'); s.age=-1; s.p.style.opacity=s.ng.style.opacity=''; lit.push(s); els.push(s.p, s.ng.querySelector('circle')); s=s.from&&s.from.seg; }
+  while(s){ s.p.classList.add('fresh'); s.ng.classList.add('onfire'); s.age=-1; s.p.style.stroke=''; s.ng.querySelector('circle').style.fill=''; lit.push(s); els.push(s.p, s.ng.querySelector('circle')); s=s.from&&s.from.seg; }
   // nothing spent may cover the lit path: its lines and nodes live in their own groups above the grey ones
   lit.reverse().forEach(sg=>{ litPathsG.appendChild(sg.p); litNodesG.appendChild(sg.ng); });
   // the stalk above the leaning is part of the same lit path: keep it in the same phase
@@ -227,10 +229,8 @@ function growUp(done){
   upA+=R_(-0.9,0.9);
   if(Math.sin(upA)>0.35) upA=Math.cos(upA)>0?0.36:Math.PI-0.36;        // keep it from heading down
   const to={x:from.x+Math.cos(upA)*RISE, y:from.y+Math.sin(upA)*RISE};
-  // a slight bend in every segment, so the stalk meanders rather than zigzags
-  const nx=-Math.sin(upA), ny=Math.cos(upA), bend=R_(-4,4);
-  const cx=(from.x+to.x)/2+nx*bend, cy=(from.y+to.y)/2+ny*bend;
-  const p=el('path',{d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} Q${cx.toFixed(1)} ${cy.toFixed(1)} ${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
+  // straight segments; the wandering comes from the turn between them
+  const p=el('path',{d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
   upG.appendChild(p);
   const Ln=p.getTotalLength(); p.style.transition='none'; p.style.strokeDasharray=Ln; p.style.strokeDashoffset=Ln; p.getBoundingClientRect(); p.style.transition='';
   p.style.strokeDashoffset=0;
