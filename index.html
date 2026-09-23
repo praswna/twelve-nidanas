@@ -295,7 +295,7 @@ function seedPast(){
   // lives before this one fill the whole ground, beyond what the view frames; each strand its own grey
   const past={g:pastG,nodes:[]}, tips=[], bg=[0x0c,0x0d,0x0f], base=[0x6a,0x6b,0x70];
   const grey=k=>`rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`;
-  for(let k=0;k<46;k++) tips.push({x:R_(-500,1300),y:R_(-420,900),a:Math.PI/2+R_(-1.6,1.6),k:R_(0.1,0.5)});
+  for(let k=0;k<46;k++) tips.push({x:R_(-500,1300),y:R_(-420,900),a:Math.PI/2+R_(-1.6,1.6),k:R_(0.1,0.35)});
   for(let step=0;step<16;step++){
     const next=[];
     tips.forEach(t=>{
