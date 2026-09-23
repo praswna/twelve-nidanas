@@ -78,6 +78,7 @@
 </style>
 <div id="stage"><svg id="svg" viewBox="0 0 800 620" preserveAspectRatio="xMidYMid meet">
   <g id="pair">
+    <g id="past" class="root"></g>
     <g id="spentTwigs"></g>
     <g id="L" class="root"></g>
     <g id="R" class="root"></g>
@@ -100,7 +101,7 @@
 <div id="line"></div>
 <script>
 const $=id=>document.getElementById(id);
-const line=$('line'), pair=$('pair'), L=$('L'), R=$('R'),  twigsG=$('twigs'), spentG=$('spentTwigs'), meet=$('meet');
+const line=$('line'), pair=$('pair'), L=$('L'), R=$('R'),  twigsG=$('twigs'), pastG=$('past'), spentG=$('spentTwigs'), meet=$('meet');
 const ns='http://www.w3.org/2000/svg';
 const el=(t,a)=>{const e=document.createElementNS(ns,t);for(const k in a)e.setAttribute(k,a[k]);return e;};
 const R_=(a,b)=>a+Math.random()*(b-a);
@@ -291,26 +292,30 @@ function buildReeds(o){
 // saṃsāra has no discoverable beginning (SN 15.1): even the first life we see takes root among
 // the grey roots of lives before it
 function seedPast(){
-  const past={g:L,nodes:[]}, grey=FADE(9), tips=[];
-  for(let k=0;k<11;k++) tips.push({x:400+R_(-120,120),y:TOP-R_(60,170),a:Math.PI/2+R_(-1.2,1.2)});
-  for(let step=0;step<12;step++){
+  // lives before this one fill the whole ground, beyond what the view frames; each strand its own grey
+  const past={g:pastG,nodes:[]}, tips=[], bg=[0x0c,0x0d,0x0f], base=[0x6a,0x6b,0x70];
+  const grey=k=>`rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`;
+  for(let k=0;k<46;k++) tips.push({x:R_(-500,1300),y:R_(-420,900),a:Math.PI/2+R_(-1.6,1.6),k:R_(0.1,0.5)});
+  for(let step=0;step<16;step++){
     const next=[];
     tips.forEach(t=>{
       const n=Math.random()<0.45?2:1;
       for(let j=0;j<n;j++){
         // wander hard, even sideways and back across, so the old roots cross and tangle
         const a=Math.PI/2+Math.max(-1.7,Math.min(1.7,(t.a-Math.PI/2)+R_(-1.1,1.1)));
-        const sg=segment(past,t,a,R_(10,17));
-        sg.p.style.transition='none'; sg.p.style.strokeDashoffset=0; sg.p.style.stroke=grey;
-        mark(sg.ng,null); sg.ng.classList.add('old'); sg.ng.querySelector('circle').style.fill=grey;
-        next.push(sg.tip);
+        const sg=segment(past,t,a,R_(10,17)); const c=grey(t.k);
+        sg.p.style.transition='none'; sg.p.style.strokeDashoffset=0; sg.p.style.stroke=c;
+        mark(sg.ng,null); sg.ng.classList.add('old'); sg.ng.querySelector('circle').style.fill=c; pastG.appendChild(sg.ng);
+        sg.tip.k=t.k; next.push(sg.tip);
       }
     });
-    tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,26));
+    tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,110));
   }
-  // the first pair sprouts from the old mass, near the middle
-  const near=MASS.filter(t=>Math.abs(t.x-400)<45).sort((a,b)=>b.y-a.y);
-  const o=near[Math.floor(near.length*0.3)]||{x:400,y:TOP}; o.kids=(o.kids||0)+1;
+  // only the old roots near the first pair stay as ground for later births; the rest is backdrop
+  const near=MASS.filter(t=>Math.hypot(t.x-400,t.y-TOP)<110);
+  MASS=near.slice();
+  near.sort((p,q)=>Math.hypot(p.x-400,p.y-TOP)-Math.hypot(q.x-400,q.y-TOP));
+  const o=near[0]||{x:400,y:TOP}; o.kids=(o.kids||0)+1;
   return {x:o.x,y:o.y};
 }
 { const o=seedPast(); MEET.x=o.x; MEET.y=o.y; buildReeds(o); }
