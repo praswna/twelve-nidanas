@@ -1,3 +1,7 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>연기의 나무</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;500&display=swap">
 <style>
@@ -6,6 +10,8 @@
     --ember:#c98a4a; --glow:#ffcf8a; --reed:#4a3e32;
   }
   html,body{height:100%}
+  /* dragging to pan must never select the labels or the caption */
+  body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:"Noto Serif KR","Apple SD Gothic Neo",serif;font-weight:300;
     display:flex;flex-direction:column;padding-inline:16px;box-sizing:border-box}
@@ -16,7 +22,37 @@
   #zoom button{width:28px;height:28px;border:1px solid #26272b;background:#141518;color:#8c8d92;
     font:300 15px/1 inherit;border-radius:4px;cursor:pointer;transition:color .3s,border-color .3s}
   #zoom button:hover{color:#d8d3c8;border-color:#3a3b3f}
+  #zPause{font-size:10px!important;letter-spacing:-2px;margin-right:6px}
+  #fps{position:absolute;left:10px;top:10px;z-index:3;font:300 11px/1 ui-monospace,Menlo,Consolas,monospace;color:#5a5b60;letter-spacing:.04em;pointer-events:none}
+  /* a small menu, top right: the documents behind the picture */
+  #menu{position:absolute;right:10px;top:10px;z-index:3}
+  #mBtn{width:28px;height:28px;border:1px solid #26272b;background:#141518;color:#8c8d92;font:300 16px/1 inherit;border-radius:4px;cursor:pointer;transition:color .3s,border-color .3s}
+  #mBtn:hover,#menu.open #mBtn{color:#d8d3c8;border-color:#3a3b3f}
+  #mList{display:none;position:absolute;right:0;top:34px;min-width:150px;background:#141518;border:1px solid #26272b;border-radius:4px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+  #menu.open #mList{display:block}
+  #mList button{display:block;width:100%;text-align:left;border:0;background:none;color:#a9aab0;font:300 13px/1.2 inherit;padding:8px 10px;border-radius:3px;cursor:pointer;white-space:nowrap}
+  #mList button:hover{background:#1e1f24;color:#d8d3c8}
+  /* the document itself: a quiet sheet over the picture, readable and selectable */
+  #doc{display:none;position:fixed;inset:0;background:rgba(12,13,15,.88);z-index:4;overflow:auto;-webkit-user-select:text;user-select:text}
+  #doc.open{display:block}
+  #doc.open~#zoom{display:none}          /* the controls stay under the sheet while reading */
+  #docBox{max-width:720px;margin:48px auto 80px;padding:0 24px;color:#c9c4b9;font-size:14.5px;line-height:1.75;letter-spacing:.01em}
+  #docClose{position:fixed;right:14px;top:10px;width:28px;height:28px;border:1px solid #3a3b3f;background:#141518;color:#d8d3c8;font:300 16px/1 inherit;border-radius:4px;cursor:pointer}
+  #docBox h1{font-size:22px;font-weight:500;color:#e8e3d8;margin:0 0 20px}
+  #docBox h2{font-size:16px;font-weight:500;color:#e8a25a;margin:34px 0 10px;letter-spacing:.04em}
+  #docBox h3{font-size:14px;font-weight:500;color:#c9c4b9;margin:22px 0 6px}
+  #docBox p{margin:0 0 12px}
+  #docBox blockquote{margin:12px 0;padding:8px 16px;border-left:2px solid #6b5238;color:#a89a86}
+  #docBox table{border-collapse:collapse;width:100%;margin:10px 0 16px;font-size:13.5px}
+  #docBox th,#docBox td{border:1px solid #26272b;padding:6px 9px;vertical-align:top;text-align:left}
+  #docBox th{color:#8c8d92;font-weight:500;background:#121316}
+  #docBox ul{padding-left:20px;margin:0 0 12px} #docBox li{margin:4px 0}
+  #docBox a{color:#e8a25a;text-decoration:none;border-bottom:1px solid #6b5238}
+  #docBox strong{color:#e8e3d8;font-weight:500}
   svg{width:100%;height:100%;display:block}
+  /* earlier lives: painted once into a bitmap and only moved with the view, so their number costs nothing per frame */
+  #bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  #svg{position:relative}
   #line{height:64px;display:flex;align-items:center;justify-content:center;
     font-size:15px;letter-spacing:.06em;opacity:.85;text-align:center}
   .root{transition:transform 1.6s cubic-bezier(.4,0,.9,1);transform-box:fill-box}
@@ -33,8 +69,8 @@
   #meet{transition:opacity 1.2s, transform 1.4s}
   #meet .core{fill:color-mix(in srgb,var(--glow) calc(var(--life,1)*100%),var(--bg));transition:r .9s cubic-bezier(.2,.8,.3,1),fill 1.2s}
   #meet{--breath:3.2s;--depth:1.3}
-  #meet .halo{fill:var(--ember);opacity:calc(.22*var(--life,1));animation:breathe var(--breath) ease-in-out infinite;transition:r .9s cubic-bezier(.2,.8,.3,1)}
-  #meet .halo2{fill:var(--ember);opacity:calc(.08*var(--life,1));animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1)}
+  #meet .halo{fill:var(--ember);opacity:calc(.22*var(--life,1));animation:breathe var(--breath) ease-in-out infinite;transition:r .9s cubic-bezier(.2,.8,.3,1),opacity 1.2s}
+  #meet .halo2{fill:var(--ember);opacity:calc(.08*var(--life,1));animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1),opacity 1.2s}
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(var(--depth))}}
   /* the pulse is a colour swing, never translucency: nothing shows through a lit line or dot */
   /* everything that is this life's body fades with --life (faculties, the pair, the stalk); craving does not */
@@ -60,7 +96,7 @@
   .node.lit text{fill:color-mix(in srgb,var(--ink) var(--lifepct),var(--bg))}
   .node.was circle{fill:color-mix(in srgb,var(--ember) var(--lifepct),var(--bg))}
   .node.was text{fill:color-mix(in srgb,#a89a86 var(--lifepct),var(--bg))}
-  /* 애·취·유 do not age: craving and what it piles up stay bright to the end */
+  /* 수·애·취·유 do not age: feeling (pain and grief come with 노사) and craving stay bright; only the door, 촉, dims */
   .node.tanha.lit circle{fill:var(--glow)} .node.tanha.lit text{fill:var(--ink)}
   .node.tanha.was circle{fill:var(--ember)} .node.tanha.was text{fill:#a89a86}
   .tg{transition:opacity 1.4s}
@@ -76,7 +112,8 @@
   @keyframes yuPulse{0%{transform:scale(1)}30%{transform:scale(1.4)}100%{transform:scale(1)}}
   @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<div id="stage"><svg id="svg" viewBox="0 0 800 620" preserveAspectRatio="xMidYMid meet">
+<div id="stage"><canvas id="bg" aria-hidden="true"></canvas>
+<svg id="svg" viewBox="0 0 800 620" preserveAspectRatio="xMidYMid meet">
   <g id="pair">
     <g id="spentTwigs"></g>
     <g id="L" class="root"></g>
@@ -95,9 +132,169 @@
     </g>
   </g>
 </svg>
-  <div id="zoom"><button id="zOut" title="축소" aria-label="축소">−</button><button id="zIn" title="확대" aria-label="확대">+</button><button id="zFit" title="맞추기" aria-label="맞추기">○</button></div>
+  <div id="fps"></div>
+  <div id="menu"><button id="mBtn" title="문서" aria-label="문서">≡</button>
+    <div id="mList"><button data-doc="doctrine">교리 점검</button><button data-doc="review">다섯 관점 리뷰 (v76)</button></div></div>
+  <div id="doc"><button id="docClose" title="닫기" aria-label="닫기">×</button><div id="docBox"></div></div>
+  <div id="zoom"><button id="zPause" title="일시정지" aria-label="일시정지">❚❚</button><button id="zOut" title="축소" aria-label="축소">−</button><button id="zIn" title="확대" aria-label="확대">+</button><button id="zFit" title="맞추기" aria-label="맞추기">○</button></div>
 </div>
 <div id="line"></div>
+<script type="text/markdown" id="md-doctrine">
+# 연기의 나무 — 교리 점검
+
+이 앱이 그리는 것 하나하나를 경전에 대어 본 기록. 그림의 뜻이 바뀔 때마다 이 문서를 같이 고친다.
+검토 기준은 초기 경전(니까야)이며, 학파에 따라 갈리는 곳은 그렇다고 적었다.
+
+## 이 앱이 그리는 것
+
+| 마디 | 그림 |
+|---|---|
+| 식 ↔ 명색 | 서로 기대어 선 두 갈대. 접점에 불이 있다. |
+| 촉 → 수 → 애 → 취 → 유 | 접점의 불에서 돋는 잔가지. 하나씩 켜지고, 다 타면 회색 흔적으로 가라앉는다. |
+| 유 → 식의 증장 | 유가 들어올 때마다 불이 번쩍이고, 식·명색이 아래로 한 마디씩 뿌리내린다. |
+| 생 | 옛 뿌리 더미에서 새 쌍이 각자 올라와 맞닿는 순간 접점과 불이 생긴다. |
+| 노사 | 불의 밝기가 나이에 따라 흐려지고, 마지막에 꺼지며 접점이 사라지고 둘 다 회색으로 남는다. 마지막 유만 남았다가 새 쌍이 맞닿는 순간 꺼진다. |
+| 이전 생들 | 화면 전체에 깔린 회색 뿌리. 시간이 갈수록 물러난다(0.1 → 첫 죽음 뒤 0.01). 죽은 생의 뿌리와 줄기는 노사 때 이 배경에 스며들어 그 일부가 된다. |
+
+무명·행, 육입은 그리지 않는다. 무명은 화면 안의 사물이 아니라 **보는 방식**이다(아래 "한 줄기" 참고).
+
+## 경전과 맞는 것
+
+| 그림 | 근거 |
+|---|---|
+| 무명·행·육입 없이 식↔명색, 명색→촉 | DN 15(대인연경)의 9지 연기 그대로 |
+| 생·노사·재생이 모두 식↔명색 쌍 위에서 일어남 | DN 15 "이만큼으로 태어나고 늙고 죽고 다시 난다 — 명색이 식과 함께 서로 조건 지어 굴러가는 만큼" |
+| 둘이 함께 서고, 함께 쓰러짐 | SN 12.67(갈대단의 경): 하나를 빼면 다른 하나도 넘어진다 |
+| 기댐이 생기는 순간에야 불(접점)이 생김 | SN 12.67. 홀로 선 갈대는 없다. 기대는 순간에만 서 있음이 있다 |
+| 유가 들어오면 식이 커지고 명색이 아래로 뿌리내림 | SN 12.39 "의도하고 계획하고 잠재한 것이 식이 머물 대상이 되고, 식이 머물러 자라면 명색이 내려온다(avakkanti)" |
+| 취가 불을 먹임 | upādāna의 본뜻이 "연료" |
+| 불의 크기(식의 증장)와 밝기(목숨)를 나눔 — 먹여도 사그라든다 | SN 12.64(식의 증장)와 SN 12.2(늙음: 수명의 감소, 감관의 익음)를 한 그림에 |
+| 불의 밝기가 목숨이고, 죽으면 꺼짐 | MN 43 "수명은 열기에 기대고 열기는 수명에 기댄다 — 등불의 불꽃과 빛처럼", SN 22.95 "수명·열기·식이 몸을 떠나면 버려져 눕는다" |
+| 늙으면 촉(감관의 문)만 흐려지고, 수·애·취·유는 끝까지 밝음 | SN 12.2 늙음의 정의는 "감관의 익음". 연기 공식은 노사와 함께 "괴로움·근심"(괴로운 느낌, MN 141)이 **생겨난다**고 함. MN 82 여든의 꼬라위야 왕: 몸은 쇠했어도 "세상은 채워지지 않고 갈애의 노예" |
+| 불이 새 생으로 옮겨가지 않고 새로 나타남 | MN 38: "바로 이 식이 다른 것 아닌 채 윤회한다"는 사띠의 견해를 물리치고, 불은 타는 연료에 따라 장작불·풀불로 불린다고 함 |
+| 마지막 유가 어둠 속에 남았다가, 새 쌍이 맞닿는 순간 꺼짐 | SN 44.9 "몸을 내려놓고 아직 다른 몸을 얻지 않았을 때, 그때는 갈애가 연료다". 유를 옮기지 않는 것도 같은 이유 |
+| 새 생이 옛 뿌리 더미에 뿌리박음 | AN 3.76 "업은 밭, 식은 씨앗, 갈애는 물기" |
+| 첫 생도 이미 있던 회색 뿌리 사이에서 돋음 | SN 15.1 "윤회는 시작을 알 수 없다(anamatagga). 첫 지점이 드러나지 않는다" |
+| 옛 뿌리가 시간이 갈수록 0.1, 0.01로 흐려짐 | 지나간 업의 자취는 남되, 사건 자체는 사라진다(상좌부·경량부의 상속관) |
+| 캡션 "~을 조건으로 ~이 있다" | 정형구 그대로. 명색→촉은 DN 15의 순서 |
+
+## 한 줄기 — 무명의 시선
+
+기댐에서 한 가닥 줄기가 뻗어 나가고 불이 그 끝을 따라간다. 이 한 줄기는 **사람이 자기를 보는 방식**이다.
+"하나가 이어지며 겪는다"고 여기는 유신견. 그 아래의 Λ는 그 하나가 실은 둘의 기댐에서 형성된 것임을 보여준다.
+켜진 사슬이 매번 새 마디에서 Λ를 지나 줄기 끝의 불까지 한 길로 이어지므로, 줄기가 두 갈래에 기대고 있음이 계속 드러난다.
+
+> "왜 '중생'이라 여기는가? 마라여, 그것은 네 견해다. 이것은 순전한 형성들의 더미일 뿐, 여기서 중생은 찾을 수 없다.
+> 부품들이 모일 때 '수레'라는 말이 있듯, 무더기들이 있을 때 '중생'이라는 관습이 있다." — SN 5.10 (와지라 비구니)
+
+한 줄기가 "수레"라는 이름이고, 아래 두 갈래가 부품이다.
+
+## 학파에 따라 갈리는 곳
+
+- **죽음과 재생 사이의 정적(3.4초).** 상좌부 아비담마는 죽음 마음 직후 재생 마음이 온다고 보아 중간 존재를 두지 않는다(Kathāvatthu 8.2).
+  설일체유부·대승은 중유(中有)를 둔다. 이 앱의 정적은 SN 44.9의 "아직 다른 몸을 얻지 않았을 때"에 근거하며, 그 사이 남는 것은 존재가 아니라 연료(유)다.
+- **회색 흔적.** 형태가 남는 흔적은 삼세실유(설일체유부)에 가깝게 읽힐 수 있다. 여기서는 사건이 아니라 **업의 자취**로 읽는다.
+  그래서 흔적은 남되 반드시 흐려진다.
+
+## 남은 긴장 — 환멸문이 없다
+
+지금 그림은 유전문(流轉門)만 있다. 애·취·유가 끝까지 밝고, 유가 죽음 너머까지 남고, 모든 수가 빠짐없이 애로 가고, 환멸이 없다.
+이것을 합쳐 읽으면 "**무엇도** 갈애를 끝내지 못한다"가 되는데, 이는 멸성제(SN 56.11: 바로 그 갈애의 남김없는 사라짐)와 어긋난다.
+늙음이 갈애를 끝내지 못한다(MN 82)는 맞지만, 아무것도 끝내지 못한다는 것은 틀리다.
+
+환멸문의 실마리는 이 그림 안에 이미 있다. MN 72: 불은 연료가 다하면 꺼질 뿐, 어디로 가지 않는다.
+지금 죽음은 불을 끄지만 **연료(유)가 남아 있어 다시 붙는다.** 열반은 연료가 다해 꺼지고 다시 붙지 않는 불이다.
+구현하려면 (1) 수에서 애로 가지 않는 잔가지가 생겨야 하고, (2) 그런 생은 뿌리를 남기지 않아 다음 쌍이 돋지 않아야 한다.
+
+## 이미 고친 것 (기록)
+
+| 문제 | 고침 |
+|---|---|
+| 재생 때 불이 옛 자리에서 새 뿌리로 미끄러져 갔다 — "같은 것이 옮겨간다"(MN 38 사띠의 견해) | 불은 제자리에서 새로 생긴다 |
+| 유가 다음 생으로 이동하면 "떠도는 존재"로 읽힌다 | 제자리에 남았다가 새 쌍이 맞닿는 순간 꺼진다 |
+| 수(受)가 늙음과 함께 흐려졌다 — 공식은 노사와 함께 괴로움·근심이 생겨난다고 함 | 촉만 흐려지고 수는 끝까지 밝다 |
+| 첫 생이 빈 바닥에서 시작했다 — "태초"로 읽힘(SN 15.1) | 회색 뿌리 더미 위에서 돋는다 |
+| 시작할 때 이미 기댐과 불이 있었다 | 둘이 따로 올라와 맞닿는 순간 접점과 불이 생긴다. 재생도 같다 |
+| 노사 뒤 옛 접점이 검은 마디로 남아 있었다 | 불이 꺼질 때 접점도 함께 사라진다 |
+
+</script>
+<script type="text/markdown" id="md-review">
+# 연기의 나무 — 리뷰
+
+12연기 시각화(`index.html`, 단일 HTML·SVG·JS)에 대한 검토 기록.
+v76에서 교리·디자인·학습·구현·조형 다섯 관점으로 독립 검토했고, 그 뒤 무엇이 고쳐졌고 무엇이 바뀌었는지를 v123 기준으로 다시 적었다.
+교리 점검은 [DOCTRINE.md](DOCTRINE.md)에 따로 있다.
+
+## 현재 형태 (v123)
+
+- 화면 전체에 **이전 생들의 회색 뿌리**가 얽혀 깔려 있다(0.1~0.35). 유가 들어올 때마다 옅어져 0.1까지, 첫 죽음 뒤로는 0.01까지 물러난다.
+- 그 위로 **식과 명색이 각자 올라와** 서로를 향해 기울고, **맞닿는 순간 접점과 불이 생긴다.** 그 전엔 불이 없다.
+  문장 "식을 조건으로 명색, 명색을 조건으로 식"이 이때 뜬다.
+- 불(기댐)에서 **촉→수→애→취→유** 잔가지가 하나씩 돋아 켜지고, 다 타면 맨 아래 층으로 가라앉아 회색 흔적이 된다.
+- 유에 닿으면 불이 번쩍이고 식·명색이 **아래로 한 마디씩 뿌리내린다.** 새 마디에서 기댐까지의 길이 회색이 됐다가 기댐 쪽부터 도화선처럼 다시 켜지고, 위로 뻗는 줄기까지 한 길로 이어져 불의 숨과 같은 위상으로 맥동한다.
+- 기댐에서 **한 가닥 줄기**가 이리저리 뻗고 불이 그 끝을 따라간다(무명의 시선 — DOCTRINE.md).
+- 불의 **크기**는 유가 먹인 만큼 커지고, **밝기**는 나이에 따라 흐려진다. 먹여도 사그라든다. 이 생의 몸에 속한 것(촉, 잔가지 선, 켜진 식·명색, 줄기)은 함께 흐려지고, **수·애·취·유는 끝까지 밝다.**
+- 수명은 10~24 사이클로 무작위. **노사**에서 불이 꺼지고 접점이 사라지며 둘 다 회색으로 남는다. 마지막 유는 어둠 속에 남았다가, 새 쌍이 옛 뿌리에서 올라와 맞닿는 순간 꺼진다(생).
+- 켜진 것은 언제나 꺼진 것 위에 그려진다(층 구조). 맥동과 늙음은 투명도가 아니라 색으로 나타난다.
+- 이전 생들의 배경은 한 번 그린 그림(캔버스)이고, 죽은 생은 노사 때 그 그림에 스며든다. 그래서 살아 있는 그림(SVG)에는 늘 지금 생만 있다.
+- 화면은 나무를 따라 스스로 중심을 잡는다. 확대·축소·드래그, 일시정지(버튼·스페이스), 오른쪽 위 메뉴로 문서 열람.
+
+## v76 점수와 그때의 진단
+
+| 관점 | 점수 |
+|---|---|
+| 교리 | 6 |
+| 디자인 | 7 |
+| 학습 | 4 |
+| 구현 | 5 |
+| 조형 | 6 |
+
+한 줄 총평은 "뼈대는 진짜다. 형상은 아직 머릿속 그림보다 뒤에 있다"였다. 강점으로 꼽은 것 — 식↔명색을 원형 핵심으로 잡은 구조, 한 색상의 명도 램프와 420ms 격자 리듬, 숨이 호흡에서 심박으로 바뀌는 것, 이름이 가명(paññatti)처럼 잠깐 떴다 사라지는 것 — 은 지금도 그대로다.
+
+## v76에서 지적한 것들의 현재
+
+### 구현 결함
+
+| 지적 | 현재 |
+|---|---|
+| 조사 오류 ("수이 있다") | **고침.** 받침 헬퍼. |
+| 유 문장 미표시 | **고침.** 유 문장이 한 박자 뜬 뒤 뿌리가 자란다. |
+| 갈대 클릭 불가 | **뺌.** 클릭 상호작용 자체를 없앴다. 죽음은 수명으로 온다. |
+| 번쩍임 스냅 | **고침.** 숨 애니메이션 위에 합성. |
+| 쓰러질 때 마디가 안 따라감 | **해당 없음.** 쓰러짐이 없어졌다. |
+| 문서 골격 부재 (doctype·charset·viewport) | **고침** (v123). |
+
+### 의도와 결과가 어긋났던 것
+
+| 지적 | 현재 |
+|---|---|
+| 갈대가 안 보인다 | **부분.** 첫 마디는 여전히 14px지만, 이제 둘이 따로 올라와 맞닿는 장면이 있어 "기대어 선 둘"이 시작에서 읽힌다. |
+| 회색 안개가 안 보인다 (0.1은 삭제와 같음) | **바뀜.** 회색은 투명도가 아니라 색으로 섞어 겹침이 평평하다. 옛 생의 뿌리는 0.35까지 밝게 시작해 시간이 갈수록 물러난다. 0.1이 낮다는 지적은 유효하나, 지금은 "남되 흐려진다"가 의도다. |
+| 쉼 줄어듦을 못 느낀다 | **그대로.** 숨이 짧아지는 것만 남았다. |
+| 위로 오르는 줄기가 하나다 | **뜻이 바뀜.** 결함이 아니라 무명의 시선으로 둔다. 아래의 Λ가 그 하나가 둘에서 형성됐음을 보인다. |
+
+### 교리적 긴장
+
+| 지적 | 현재 |
+|---|---|
+| 갈대 뽑기의 뜻이 뒤집혀 있다 | **해소.** 뽑기를 뺐다. 죽음은 수명이고, 기댐은 생길 때와 풀릴 때가 있다. |
+| 수→애가 100% 결정론 | **그대로.** 환멸문 미구현. DOCTRINE.md "남은 긴장". |
+| 회색 흔적의 존재론 | **완화.** 흔적은 남되 반드시 흐려진다. 업의 자취로 읽는다. |
+
+## 지금 보이는 것
+
+- **가장 강한 장면 둘.** 시작 — 불 없이 둘이 올라와 맞닿는 순간 불이 생기는 것. 노년 — 후광은 커진 채 흐릿하고 몸의 선은 꺼져가는데 수·애·취·유만 또렷하고, 유가 여전히 불을 먹이는데 불은 더 밝아지지 않는 것.
+- **가장 큰 빈자리.** 환멸문. 지금 그림은 "무엇도 갈애를 끝내지 못한다"로 읽힐 수 있다.
+- **학습 관점은 여전히 낮다.** 문장 한 줄 외에 풀이가 없다. 처음 보는 사람은 유가 왜 불을 키우는지, 왜 수·애·취·유만 늙지 않는지 알 길이 없다. 문서 메뉴가 생겼으니, 다음은 그림 안에서 마디를 짚으면 한 줄 풀이가 뜨는 정도가 맞다.
+- **구현.** 배경 뿌리 2,400개는 측정 없이 한 번에 붙여 0.55초에 뜬다. 켜진 것이 꺼진 것에 가려지는 경우는 브라우저에서 0건으로 확인했다.
+
+## 다음
+
+1. 환멸문 — 수에서 애로 가지 않는 잔가지, 그런 생은 뿌리를 남기지 않아 다음 쌍이 돋지 않는다.
+2. 마디를 짚으면 한 줄 풀이.
+3. 첫 마디 길이·쉼 줄어듦 — 조형 미세 조정.
+
+</script>
 <script>
 const $=id=>document.getElementById(id);
 const line=$('line'), pair=$('pair'), L=$('L'), R=$('R'),  twigsG=$('twigs'), spentG=$('spentTwigs'), meet=$('meet');
@@ -112,9 +309,27 @@ const LOOP=['촉','수','애','취','유'];
 const STEP=420, MAXLEVEL=40;
 let fallen=false, level=0, busy=false, ALL=[];
 let LIFE=0, age=0, lastTwig=null, lingerYu=null;               // this life's span (in 유 cycles) and how many it has lived
-let timers=new Set();
-const later=(f,ms)=>{const t=setTimeout(()=>{timers.delete(t);f();},ms);timers.add(t);return t;};
-const clearAll=()=>{timers.forEach(clearTimeout);timers.clear();};
+// every step runs through later(), so pausing can hold each timer with the time it has left
+let timers=new Set(), paused=false;
+const later=(f,ms)=>{
+  const r={left:ms,start:performance.now(),id:null};
+  r.run=()=>{timers.delete(r);f();};
+  if(!paused) r.id=setTimeout(r.run,ms);
+  timers.add(r); return r;
+};
+const clearAll=()=>{timers.forEach(r=>clearTimeout(r.id));timers.clear();};
+function setPaused(p){
+  if(p===paused) return; paused=p;
+  const now=performance.now();
+  if(p){
+    timers.forEach(r=>{ clearTimeout(r.id); r.id=null; r.left-=now-r.start; });
+    document.getAnimations().forEach(a=>a.pause());     // breath, pulse, flare, drawing all hold together
+  }else{
+    timers.forEach(r=>{ r.start=now; r.id=setTimeout(r.run,Math.max(0,r.left)); });
+    document.getAnimations().forEach(a=>a.play());
+  }
+  const b=$('zPause'); b.textContent=p?'\u25B6':'\u275A\u275A'; b.title=b.ariaLabel=p?'재생':'일시정지';
+}
 
 // ---- the leaning grows: fire larger, reeds thicker ----
 // the two reeds lean together at the top; below the leaning they grow DOWN like roots,
@@ -237,6 +452,15 @@ const RELIT=38;                  // ms between one segment catching and the next
 function drawSeg(root,seg){ ageRoot(root); seg.p.style.strokeDashoffset=0; later(()=>lightChain(seg),120); root.segs.push(seg); }
 const upG=$('up');
 const RISE=6;
+// the fire does not travel to the leaning: it appears there
+function appearMeet(){
+  // placed at once, and unlit; newLife() then kindles it: the core warms from the ground colour, fully opaque
+  const parts=[meet,...meet.querySelectorAll('circle')];
+  parts.forEach(e=>e.style.transition='none'); placeMeet(); meet.style.setProperty('--life',0);
+  meet.querySelector('.core').setAttribute('r',0);            // before the meeting there is no point of contact at all
+  meet.getBoundingClientRect();
+  parts.forEach(e=>e.style.transition='');
+}
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
 // the pair also grows upward one step: 식 reaches up, then 명색, and they meet again a little higher
 // the stalk wanders: each step turns a little, never plunging back down into the roots
@@ -281,9 +505,85 @@ function buildReeds(o){
   // the first segment of each, already there: the leaning
   const a=growRoot('L',true), b=growRoot('R',true);
   a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
-  [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
+  // each rises from its own foot toward the other; the leaning — and the fire — exist only once they meet
+  [...a,...b].forEach(sg=>{
+    litPathsG.appendChild(sg.p); sg.p.classList.add('fresh');
+    sg.p.setAttribute('d',`M${sg.tip.x.toFixed(1)} ${sg.tip.y.toFixed(1)} L${o.x.toFixed(1)} ${o.y.toFixed(1)}`);   // drawn foot → meeting point
+    const Ln=sg.p.getTotalLength();
+    sg.p.style.transition='none'; sg.p.style.strokeDasharray=Ln; sg.p.style.strokeDashoffset=Ln;
+    mark(sg.ng,'was'); sg.ng.classList.add('onfire'); litNodesG.appendChild(sg.ng);
+    sg.p.getBoundingClientRect();
+    sg.p.style.transition='stroke-dashoffset '+RISE_MS+'ms cubic-bezier(.3,0,.2,1)'; sg.p.style.strokeDashoffset=0;
+  });
+  syncPulse([...a,...b].flatMap(sg=>[sg.p,sg.ng.querySelector('circle')]));
+  later(()=>[...a,...b].forEach(sg=>{ sg.p.style.transition=''; }),RISE_MS+50);
 }
-buildReeds({x:400,y:TOP}); setLevel(0); newLife();
+const RISE_MS=1600;
+// the meeting: the fire kindles at the point of contact, and the sentence of mutual dependence is said
+function kindle(){
+  meet.querySelector('.core').setAttribute('r',3.6);          // the point of contact comes into being
+  newLife();
+  line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
+}
+// saṃsāra has no discoverable beginning (SN 15.1): even the first life we see takes root among
+// the grey roots of lives before it
+// lives before this one fill the whole ground, beyond what the view frames.
+// They are never touched one by one, so they are drawn as a handful of paths — one pair per shade —
+// and fading them means recolouring a dozen elements, not thousands.
+const SHADES=8, PAST_LO=0.1, PAST_HI=0.35;
+const PX0=-500, PY0=-420, PW=1800, PH=1800;                // the ground's extent in picture units
+const greyOf=k=>{ const bg=[0x0c,0x0d,0x0f], base=[0x6a,0x6b,0x70]; return `rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`; };
+const bgC=$('bg'), bgCtx=bgC.getContext('2d');
+// the ground is kept as vectors and redrawn at the current scale whenever the view moves: always crisp
+const GROUND=[];                                            // {color, alphaAt:pastK when it joined, lines:[[x1,y1,x2,y2]], dots:[[x,y,r]]}
+function seedPast(){
+  const lines=Array.from({length:SHADES},()=>[]), tips=[];
+  for(let k=0;k<160;k++) tips.push({x:R_(PX0,PX0+PW),y:R_(PY0,PY0+PH),a:Math.PI/2+R_(-1.6,1.6),s:Math.floor(Math.random()*SHADES)});
+  for(let step=0;step<16;step++){
+    const next=[];
+    tips.forEach(t=>{
+      const n=Math.random()<0.45?2:1;
+      for(let j=0;j<n;j++){
+        // wander hard, even sideways and back across, so the old roots cross and tangle
+        const a=Math.PI/2+Math.max(-1.7,Math.min(1.7,(t.a-Math.PI/2)+R_(-1.1,1.1)));
+        const len=R_(10,17), x2=t.x+Math.cos(a)*len, y2=t.y+Math.sin(a)*len;
+        lines[t.s].push([t.x,t.y,x2,y2]);
+        const tip={x:x2,y:y2,a,kids:0}; MASS.push(tip); next.push({...tip,s:t.s});
+      }
+    });
+    tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,400));
+  }
+  lines.forEach((seg,i)=>GROUND.push({color:greyOf(PAST_LO+(PAST_HI-PAST_LO)*i/(SHADES-1)),alphaAt:1,lines:seg,dots:seg.map(([, ,x,y])=>[x,y,2.6])}));
+  bgDirty=true;
+  // only the old roots near the first pair stay as ground for later births; the rest is backdrop
+  const near=MASS.filter(t=>Math.hypot(t.x-400,t.y-TOP)<110);
+  MASS=near.slice();
+  near.sort((p,q)=>Math.hypot(p.x-400,p.y-TOP)-Math.hypot(q.x-400,q.y-TOP));
+  const o=near[0]||{x:400,y:TOP}; o.kids=(o.kids||0)+1;
+  return {x:o.x,y:o.y};
+}
+let bgDirty=true, bgSig='';
+function drawGround(v){
+  const cw=svg.clientWidth, ch=svg.clientHeight; if(!cw||!ch) return;
+  const dpr=Math.min(3,devicePixelRatio||1), W=Math.round(cw*dpr), H=Math.round(ch*dpr);
+  const sc=Math.min(cw/v.w,ch/v.h), ox=(cw-v.w*sc)/2, oy=(ch-v.h*sc)/2;
+  const sig=`${W}|${H}|${sc.toFixed(5)}|${v.x.toFixed(2)}|${v.y.toFixed(2)}|${pastK.toFixed(3)}`;
+  if(!bgDirty&&sig===bgSig) return; bgSig=sig; bgDirty=false;
+  if(bgC.width!==W||bgC.height!==H){ bgC.width=W; bgC.height=H; }
+  const g=bgCtx; g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,W,H);
+  g.setTransform(dpr*sc,0,0,dpr*sc,dpr*(ox-v.x*sc),dpr*(oy-v.y*sc));   // picture units → device pixels, as the SVG maps them
+  g.lineCap='round';
+  // only what the view can see
+  const x0=v.x-20,y0=v.y-20,x1=v.x+v.w+20,y1=v.y+v.h+20, vis=(x,y)=>x>x0&&x<x1&&y>y0&&y<y1;
+  for(const gr of GROUND){
+    g.globalAlpha=Math.min(1,pastK/gr.alphaAt); g.strokeStyle=g.fillStyle=gr.color;
+    g.lineWidth=1.6; g.beginPath(); for(const [a,b,c,d] of gr.lines){ if(vis(a,b)||vis(c,d)){ g.moveTo(a,b); g.lineTo(c,d); } } g.stroke();
+    g.beginPath(); for(const [x,y,r] of gr.dots){ if(vis(x,y)){ g.moveTo(x+r,y); g.arc(x,y,r,0,Math.PI*2); } } g.fill();
+  }
+  g.globalAlpha=1;
+}
+{ const o=seedPast(); MEET.x=o.x; MEET.y=o.y; buildReeds(o); }
+setLevel(0); appearMeet(); later(kindle,RISE_MS);
 
 // ---- twigs off the leaning ----
 function grow(p){
@@ -321,7 +621,7 @@ function sprout(){
   const Ln=grow(p);
   const nodes=LOOP.map((n,i)=>{
     const t=p.getPointAtLength(Ln*(i+1)/LOOP.length);
-    const ng=el('g',{class:'node hid'+(i>=2?' tanha':'')});   // 애·취·유
+    const ng=el('g',{class:'node hid'+(i>=1?' tanha':'')});   // 수·애·취·유: feeling and craving do not age
     ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:3.6}));
     const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx); g.appendChild(ng);
     ALL.push({x:t.x,y:t.y});
@@ -367,12 +667,15 @@ function flarePulse(){
   meet.querySelector('.halo').animate([{opacity:0},{opacity:.28,offset:.18},{opacity:0}],{duration:dur,easing:ease,composite:'add'});
   meet.querySelector('.halo2').animate([{opacity:0},{opacity:.12,offset:.18},{opacity:0}],{duration:dur,easing:ease,composite:'add'});
 }
+// the ground of earlier lives recedes as time goes on: first down to 0.1, then, after a death, to 0.01
+let pastFloor=0.1, pastK=1, pastTarget=1;
+function fadePast(){ pastTarget=Math.max(pastFloor/PAST_HI,pastTarget*0.9); }   // the brightest strand sinks to the floor
 function setLife(v){ meet.style.setProperty('--life',v); pair.style.setProperty('--life',v); }
 function newLife(){
   LIFE=Math.round(R_(10,24)); age=0; setLife(1);
 }
 function afterGrowth(){
-  age++;
+  age++; fadePast();
   // fed or not, the fire ages: brightness is life left, size is what craving has piled up
   setLife(Math.max(0.12,1-age/LIFE).toFixed(3));
   if(age>=LIFE){ die(); return; }
@@ -380,14 +683,28 @@ function afterGrowth(){
 }
 // 노사: the fire goes out; one reed cannot stand without the other, so both are left as grey traces
 function die(){
-  line.textContent=says('생','노사');
-  setLife(0);
+  line.textContent=says('생','노사'); pastFloor=0.01;
+  setLife(0); meet.querySelector('.core').setAttribute('r',0);   // the point of contact goes with the leaning
   ageRoot(roots.L); ageRoot(roots.R);
   upG.querySelectorAll('path').forEach(p=>p.classList.add('dead'));
   // the 유 that led here stays lit through the dark, above everything, until the next life begins
   if(lastTwig){ lingerYu=lastTwig.nodes[LOOP.length-1].ng; twigsG.appendChild(lingerYu); lingerYu.classList.add('linger'); }
-  later(()=>{ line.textContent='노사'; },1600);
+  later(()=>{ line.textContent='노사'; bake(); },1600);
   later(birth,3400);
+}
+// what has died becomes ground: this life's roots and stalk are painted into the bitmap of earlier
+// lives and leave the living picture, so the SVG only ever carries the present life
+function bake(){
+  const seg=/M([-\d.]+) ([-\d.]+) ?L([-\d.]+) ([-\d.]+)/, by={};
+  const grp=c=>by[c]||(by[c]={color:c,alphaAt:pastK,lines:[],dots:[]});
+  document.querySelectorAll('#L path,#R path,#litPaths path,#up path').forEach(p=>{
+    const m=seg.exec(p.getAttribute('d')); if(m) grp(getComputedStyle(p).stroke).lines.push([+m[1],+m[2],+m[3],+m[4]]);
+  });
+  document.querySelectorAll('#reedNodes .node circle,#litNodes .node circle').forEach(c=>{
+    grp(getComputedStyle(c).fill).dots.push([+c.getAttribute('cx'),+c.getAttribute('cy'),+c.getAttribute('r')]);
+  });
+  Object.values(by).forEach(g=>GROUND.push(g)); bgDirty=true;
+  [L,R,litPathsG,reedNodesG,litNodesG,upG].forEach(e=>e.innerHTML='');
 }
 // 생: a new pair takes root in the mass the earlier lives left behind
 function birth(){
@@ -401,8 +718,8 @@ function birth(){
   // as the new pair takes root, that 유 is spent: it goes out in the same instant
   if(lingerYu){ lingerYu.classList.remove('linger'); lastTwig.g.appendChild(lingerYu); lingerYu=null; }
   MEET.x=o.x; MEET.y=o.y; upA=-Math.PI/2;
-  buildReeds({x:o.x,y:o.y}); setLevel(0); newLife();
-  later(cycle,1800);
+  buildReeds({x:o.x,y:o.y}); setLevel(0); appearMeet(); later(kindle,RISE_MS);
+  later(cycle,RISE_MS+2000);
 }
 function cycle(){
   if(fallen) return;
@@ -437,13 +754,23 @@ function targetView(){
   w/=zoom; h/=zoom;
   return {x:b.x+b.w/2-w/2+panX, y:b.y+b.h/2-h/2+panY, w, h};
 }
-function applyView(v){ svg.setAttribute('viewBox',`${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`); }
+let lastVB='';
+function applyView(v){
+  const vb=`${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`;
+  if(vb!==lastVB){ lastVB=vb; svg.setAttribute('viewBox',vb); }
+  // the ground eases toward its target strength, then is redrawn at this exact view
+  if(Math.abs(pastTarget-pastK)>0.0005) pastK+=(pastTarget-pastK)*0.06; else pastK=pastTarget;
+  drawGround(v);
+}
 // the view drifts toward its goal on a time constant, and the goal only moves when it
 // meaningfully changes — so a twig appearing here or there does not nudge the whole frame
 const EASE=900;           // ms to settle
 let goal=null, prevT=0;
+// frames per second, top left: the mean over the last second
+const fpsEl=$('fps'); let fpsN=0, fpsT=0;
 function tickView(now){
   const dt=prevT?Math.min(80,now-prevT):16.7; prevT=now;
+  fpsN++; if(now-fpsT>=1000){ fpsEl.textContent=Math.round(fpsN*1000/(now-fpsT))+' fps'; fpsN=0; fpsT=now; }
   const want=targetView();
   if(!goal) goal={...want};
   else{
@@ -458,12 +785,15 @@ function tickView(now){
 requestAnimationFrame(tickView);
 const setZoom=z=>{ zoom=Math.min(6,Math.max(0.4,z)); goal=targetView(); };
 $('zIn').onclick=()=>setZoom(zoom*1.3);
+$('zPause').onclick=()=>setPaused(!paused);
+// Space toggles too; a focused button already turns Space into its own click, so leave that to it
+addEventListener('keydown',e=>{ if(e.code!=='Space'||e.target.closest('button')) return; e.preventDefault(); setPaused(!paused); });
 $('zOut').onclick=()=>setZoom(zoom/1.3);
 $('zFit').onclick=()=>{ zoom=1; panX=panY=0; goal=targetView(); };
 svg.addEventListener('wheel',e=>{ e.preventDefault(); setZoom(zoom*Math.pow(1.0015,-e.deltaY)); },{passive:false});
 // drag to move, pinch to zoom
 const pts=new Map(); let last=null, pinch=0;
-svg.addEventListener('pointerdown',e=>{ pts.set(e.pointerId,e); svg.setPointerCapture(e.pointerId); svg.classList.add('drag'); last={x:e.clientX,y:e.clientY}; });
+svg.addEventListener('pointerdown',e=>{ e.preventDefault(); pts.set(e.pointerId,e); svg.setPointerCapture(e.pointerId); svg.classList.add('drag'); last={x:e.clientX,y:e.clientY}; });
 svg.addEventListener('pointermove',e=>{
   if(!pts.has(e.pointerId)) return;
   pts.set(e.pointerId,e);
@@ -481,6 +811,35 @@ svg.addEventListener('pointermove',e=>{
 const endPt=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch=0; if(!pts.size){ last=null; svg.classList.remove('drag'); } };
 svg.addEventListener('pointerup',endPt); svg.addEventListener('pointercancel',endPt);
 
-line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
-later(cycle,2200);
+line.textContent='';
+later(cycle,RISE_MS+2400);
+
+// ---- the documents: a small markdown reader, enough for headings, tables, quotes, lists, links ----
+function md(src){
+  const esc=t=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const inline=t=>esc(t).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g,(m,a,b)=>/^[a-z]+\.md$/i.test(b)?`<a href="#" data-doc="${b.replace(/\.md$/i,'').toLowerCase()}">${a}</a>`:`<a href="${b}" target="_blank" rel="noopener">${a}</a>`);
+  const lines=src.split('\n'); let out='', i=0;
+  while(i<lines.length){
+    const l=lines[i];
+    const h=/^(#{1,4})\s+(.*)$/.exec(l);
+    if(h){ const n=Math.min(h[1].length,3); out+=`<h${n}>${inline(h[2])}</h${n}>`; i++; continue; }
+    if(/^\|/.test(l)){ const rows=[]; while(i<lines.length&&/^\|/.test(lines[i])) rows.push(lines[i++]);
+      const cells=r=>r.replace(/^\||\|$/g,'').split('|').map(c=>inline(c.trim()));
+      out+='<table><tr>'+cells(rows[0]).map(c=>`<th>${c}</th>`).join('')+'</tr>'+rows.slice(2).map(r=>'<tr>'+cells(r).map(c=>`<td>${c}</td>`).join('')+'</tr>').join('')+'</table>'; continue; }
+    if(/^>/.test(l)){ const q=[]; while(i<lines.length&&/^>/.test(lines[i])) q.push(lines[i++].replace(/^>\s?/,'')); out+=`<blockquote>${inline(q.join(' '))}</blockquote>`; continue; }
+    if(/^- /.test(l)){ const it=[]; while(i<lines.length&&/^(- |\s{2,}\S)/.test(lines[i])){ if(/^- /.test(lines[i])) it.push(lines[i].slice(2)); else it[it.length-1]+=' '+lines[i].trim(); i++; } out+='<ul>'+it.map(x=>`<li>${inline(x)}</li>`).join('')+'</ul>'; continue; }
+    if(!l.trim()){ i++; continue; }
+    const par=[]; while(i<lines.length&&lines[i].trim()&&!/^(#|\||>|- )/.test(lines[i])) par.push(lines[i++]);
+    if(!par.length){ i++; continue; }                     // never stall on a line no branch claims
+    out+=`<p>${inline(par.join(' '))}</p>`;
+  }
+  return out;
+}
+const menu=$('menu'), doc=$('doc');
+function openDoc(name){ const src=$('md-'+name); if(!src) return; $('docBox').innerHTML=md(src.textContent.trim()); doc.classList.add('open'); doc.scrollTop=0; menu.classList.remove('open'); }
+$('mBtn').onclick=e=>{ e.stopPropagation(); menu.classList.toggle('open'); };
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-doc]'); if(b){ e.preventDefault(); openDoc(b.dataset.doc); return; } if(!e.target.closest('#menu')) menu.classList.remove('open'); });
+$('docClose').onclick=()=>doc.classList.remove('open');
+addEventListener('keydown',e=>{ if(e.key==='Escape'){ doc.classList.remove('open'); menu.classList.remove('open'); } });
 </script>
