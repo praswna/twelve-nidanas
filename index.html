@@ -573,8 +573,8 @@ function drawGround(v){
   const g=bgCtx; g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,W,H);
   g.setTransform(dpr*sc,0,0,dpr*sc,dpr*(ox-v.x*sc),dpr*(oy-v.y*sc));   // picture units → device pixels, as the SVG maps them
   g.lineCap='round';
-  // only what the view can see
-  const x0=v.x-20,y0=v.y-20,x1=v.x+v.w+20,y1=v.y+v.h+20, vis=(x,y)=>x>x0&&x<x1&&y>y0&&y<y1;
+  // only what the screen can see — the whole canvas, not just the viewBox (the 'meet' fit shows more on one axis) — plus a margin
+  const m=60, x0=v.x-ox/sc-m, y0=v.y-oy/sc-m, x1=x0+cw/sc+2*m, y1=y0+ch/sc+2*m, vis=(x,y)=>x>x0&&x<x1&&y>y0&&y<y1;
   for(const gr of GROUND){
     g.globalAlpha=Math.min(1,pastK/gr.alphaAt); g.strokeStyle=g.fillStyle=gr.color;
     g.lineWidth=1.6; g.beginPath(); for(const [a,b,c,d] of gr.lines){ if(vis(a,b)||vis(c,d)){ g.moveTo(a,b); g.lineTo(c,d); } } g.stroke();
