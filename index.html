@@ -37,8 +37,8 @@
   #meet{transition:opacity 1.2s, transform 1.4s}
   #meet .core{fill:color-mix(in srgb,var(--glow) calc(var(--life,1)*100%),var(--bg));transition:r .9s cubic-bezier(.2,.8,.3,1),fill 1.2s}
   #meet{--breath:3.2s;--depth:1.3}
-  #meet .halo{fill:var(--ember);opacity:calc(.22*var(--life,1));animation:breathe var(--breath) ease-in-out infinite;transition:r .9s cubic-bezier(.2,.8,.3,1)}
-  #meet .halo2{fill:var(--ember);opacity:calc(.08*var(--life,1));animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1)}
+  #meet .halo{fill:var(--ember);opacity:calc(.22*var(--life,1));animation:breathe var(--breath) ease-in-out infinite;transition:r .9s cubic-bezier(.2,.8,.3,1),opacity 1.2s}
+  #meet .halo2{fill:var(--ember);opacity:calc(.08*var(--life,1));animation:breathe var(--breath) ease-in-out infinite .4s;transition:r .9s cubic-bezier(.2,.8,.3,1),opacity 1.2s}
   @keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(var(--depth))}}
   /* the pulse is a colour swing, never translucency: nothing shows through a lit line or dot */
   /* everything that is this life's body fades with --life (faculties, the pair, the stalk); craving does not */
@@ -262,8 +262,9 @@ const upG=$('up');
 const RISE=6;
 // the fire does not travel to the leaning: it appears there
 function appearMeet(){
-  meet.style.transition='none'; meet.style.opacity=0; placeMeet(); meet.getBoundingClientRect();
-  meet.style.transition=''; meet.style.opacity='';
+  // placed at once, and unlit; newLife() then kindles it: the core warms from the ground colour, fully opaque
+  meet.style.transition='none'; placeMeet(); meet.style.setProperty('--life',0); meet.getBoundingClientRect();
+  meet.style.transition='';
 }
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
 // the pair also grows upward one step: 식 reaches up, then 명색, and they meet again a little higher
@@ -309,7 +310,8 @@ function buildReeds(o){
   // the first segment of each, already there: the leaning
   const a=growRoot('L',true), b=growRoot('R',true);
   a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
-  [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
+  [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.ng.classList.add('onfire'); litNodesG.appendChild(sg.ng); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
+  syncPulse([...a,...b].flatMap(sg=>[sg.p,sg.ng.querySelector('circle')]));
 }
 // saṃsāra has no discoverable beginning (SN 15.1): even the first life we see takes root among
 // the grey roots of lives before it
