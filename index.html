@@ -50,7 +50,7 @@
   #docBox strong{color:#e8e3d8;font-weight:500}
   svg{width:100%;height:100%;display:block}
   /* earlier lives: painted once into a bitmap and only moved with the view, so their number costs nothing per frame */
-  #bg{position:absolute;left:0;top:0;pointer-events:none;transform-origin:0 0;transition:opacity 2s;will-change:transform}
+  #bg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   #svg{position:relative}
   #line{height:64px;display:flex;align-items:center;justify-content:center;
     font-size:15px;letter-spacing:.06em;opacity:.85;text-align:center}
@@ -529,9 +529,11 @@ function kindle(){
 // They are never touched one by one, so they are drawn as a handful of paths — one pair per shade —
 // and fading them means recolouring a dozen elements, not thousands.
 const SHADES=8, PAST_LO=0.1, PAST_HI=0.35;
-const PX0=-500, PY0=-420, PW=1800, PH=1800, PS=1.5;        // the ground's extent in picture units, and bitmap pixels per unit
+const PX0=-500, PY0=-420, PW=1800, PH=1800;                // the ground's extent in picture units
 const greyOf=k=>{ const bg=[0x0c,0x0d,0x0f], base=[0x6a,0x6b,0x70]; return `rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`; };
-const bgC=$('bg'); let bgCtx=null;
+const bgC=$('bg'), bgCtx=bgC.getContext('2d');
+// the ground is kept as vectors and redrawn at the current scale whenever the view moves: always crisp
+const GROUND=[];                                            // {color, alphaAt:pastK when it joined, lines:[[x1,y1,x2,y2]], dots:[[x,y,r]]}
 function seedPast(){
   const lines=Array.from({length:SHADES},()=>[]), tips=[];
   for(let k=0;k<80;k++) tips.push({x:R_(PX0,PX0+PW),y:R_(PY0,PY0+PH),a:Math.PI/2+R_(-1.6,1.6),s:Math.floor(Math.random()*SHADES)});
@@ -549,20 +551,34 @@ function seedPast(){
     });
     tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,200));
   }
-  // paint once: lines, then round specks for the nodes, one shade of grey per bundle
-  bgC.width=Math.round(PW*PS); bgC.height=Math.round(PH*PS); bgC.style.width=bgC.width+'px'; bgC.style.height=bgC.height+'px';
-  const g=bgCtx=bgC.getContext('2d'); g.scale(PS,PS); g.translate(-PX0,-PY0); g.lineCap='round';
-  lines.forEach((seg,i)=>{
-    g.strokeStyle=greyOf(PAST_LO+(PAST_HI-PAST_LO)*i/(SHADES-1));
-    g.lineWidth=1.6; g.beginPath(); seg.forEach(([x1,y1,x2,y2])=>{ g.moveTo(x1,y1); g.lineTo(x2,y2); }); g.stroke();
-    g.lineWidth=5.2; g.beginPath(); seg.forEach(([, ,x2,y2])=>{ g.moveTo(x2,y2); g.lineTo(x2+.01,y2); }); g.stroke();
-  });
+  lines.forEach((seg,i)=>GROUND.push({color:greyOf(PAST_LO+(PAST_HI-PAST_LO)*i/(SHADES-1)),alphaAt:1,lines:seg,dots:seg.map(([, ,x,y])=>[x,y,2.6])}));
+  bgDirty=true;
   // only the old roots near the first pair stay as ground for later births; the rest is backdrop
   const near=MASS.filter(t=>Math.hypot(t.x-400,t.y-TOP)<110);
   MASS=near.slice();
   near.sort((p,q)=>Math.hypot(p.x-400,p.y-TOP)-Math.hypot(q.x-400,q.y-TOP));
   const o=near[0]||{x:400,y:TOP}; o.kids=(o.kids||0)+1;
   return {x:o.x,y:o.y};
+}
+let bgDirty=true, bgSig='';
+function drawGround(v){
+  const cw=svg.clientWidth, ch=svg.clientHeight; if(!cw||!ch) return;
+  const dpr=Math.min(3,devicePixelRatio||1), W=Math.round(cw*dpr), H=Math.round(ch*dpr);
+  const sc=Math.min(cw/v.w,ch/v.h), ox=(cw-v.w*sc)/2, oy=(ch-v.h*sc)/2;
+  const sig=`${W}|${H}|${sc.toFixed(5)}|${v.x.toFixed(2)}|${v.y.toFixed(2)}|${pastK.toFixed(3)}`;
+  if(!bgDirty&&sig===bgSig) return; bgSig=sig; bgDirty=false;
+  if(bgC.width!==W||bgC.height!==H){ bgC.width=W; bgC.height=H; }
+  const g=bgCtx; g.setTransform(1,0,0,1,0,0); g.clearRect(0,0,W,H);
+  g.setTransform(dpr*sc,0,0,dpr*sc,dpr*(ox-v.x*sc),dpr*(oy-v.y*sc));   // picture units → device pixels, as the SVG maps them
+  g.lineCap='round';
+  // only what the view can see
+  const x0=v.x-20,y0=v.y-20,x1=v.x+v.w+20,y1=v.y+v.h+20, vis=(x,y)=>x>x0&&x<x1&&y>y0&&y<y1;
+  for(const gr of GROUND){
+    g.globalAlpha=Math.min(1,pastK/gr.alphaAt); g.strokeStyle=g.fillStyle=gr.color;
+    g.lineWidth=1.6; g.beginPath(); for(const [a,b,c,d] of gr.lines){ if(vis(a,b)||vis(c,d)){ g.moveTo(a,b); g.lineTo(c,d); } } g.stroke();
+    g.beginPath(); for(const [x,y,r] of gr.dots){ if(vis(x,y)){ g.moveTo(x+r,y); g.arc(x,y,r,0,Math.PI*2); } } g.fill();
+  }
+  g.globalAlpha=1;
 }
 { const o=seedPast(); MEET.x=o.x; MEET.y=o.y; buildReeds(o); }
 setLevel(0); appearMeet(); later(kindle,RISE_MS);
@@ -650,11 +666,8 @@ function flarePulse(){
   meet.querySelector('.halo2').animate([{opacity:0},{opacity:.12,offset:.18},{opacity:0}],{duration:dur,easing:ease,composite:'add'});
 }
 // the ground of earlier lives recedes as time goes on: first down to 0.1, then, after a death, to 0.01
-let pastFloor=0.1, pastK=1;
-function fadePast(){
-  pastK=Math.max(pastFloor/PAST_HI,pastK*0.9);              // the brightest strand sinks to the floor; the rest below it
-  bgC.style.opacity=pastK.toFixed(3);
-}
+let pastFloor=0.1, pastK=1, pastTarget=1;
+function fadePast(){ pastTarget=Math.max(pastFloor/PAST_HI,pastTarget*0.9); }   // the brightest strand sinks to the floor
 function setLife(v){ meet.style.setProperty('--life',v); pair.style.setProperty('--life',v); }
 function newLife(){
   LIFE=Math.round(R_(10,24)); age=0; setLife(1);
@@ -680,19 +693,15 @@ function die(){
 // what has died becomes ground: this life's roots and stalk are painted into the bitmap of earlier
 // lives and leave the living picture, so the SVG only ever carries the present life
 function bake(){
-  const g=bgCtx; if(!g) return;
-  const bg=[0x0c,0x0d,0x0f];
-  // the bitmap is shown at opacity pastK, so a colour is lifted by 1/pastK to land where it is now
-  const lift=c=>{ const m=/rgba?\(([^)]+)\)/.exec(c); if(!m) return c; const v=m[1].split(',').map(Number);
-    return `rgb(${v.slice(0,3).map((x,i)=>Math.min(255,Math.round(bg[i]+(x-bg[i])/pastK))).join(',')})`; };
-  const seg=/M([-\d.]+) ([-\d.]+) ?L([-\d.]+) ([-\d.]+)/;
+  const seg=/M([-\d.]+) ([-\d.]+) ?L([-\d.]+) ([-\d.]+)/, by={};
+  const grp=c=>by[c]||(by[c]={color:c,alphaAt:pastK,lines:[],dots:[]});
   document.querySelectorAll('#L path,#R path,#litPaths path,#up path').forEach(p=>{
-    const m=seg.exec(p.getAttribute('d')); if(!m) return;
-    g.strokeStyle=lift(getComputedStyle(p).stroke); g.lineWidth=1.6; g.beginPath(); g.moveTo(+m[1],+m[2]); g.lineTo(+m[3],+m[4]); g.stroke();
+    const m=seg.exec(p.getAttribute('d')); if(m) grp(getComputedStyle(p).stroke).lines.push([+m[1],+m[2],+m[3],+m[4]]);
   });
   document.querySelectorAll('#reedNodes .node circle,#litNodes .node circle').forEach(c=>{
-    g.fillStyle=lift(getComputedStyle(c).fill); g.beginPath(); g.arc(+c.getAttribute('cx'),+c.getAttribute('cy'),+c.getAttribute('r'),0,Math.PI*2); g.fill();
+    grp(getComputedStyle(c).fill).dots.push([+c.getAttribute('cx'),+c.getAttribute('cy'),+c.getAttribute('r')]);
   });
+  Object.values(by).forEach(g=>GROUND.push(g)); bgDirty=true;
   [L,R,litPathsG,reedNodesG,litNodesG,upG].forEach(e=>e.innerHTML='');
 }
 // 생: a new pair takes root in the mass the earlier lives left behind
@@ -747,10 +756,9 @@ let lastVB='';
 function applyView(v){
   const vb=`${v.x.toFixed(1)} ${v.y.toFixed(1)} ${v.w.toFixed(1)} ${v.h.toFixed(1)}`;
   if(vb!==lastVB){ lastVB=vb; svg.setAttribute('viewBox',vb); }
-  // the SVG fits the viewBox with 'meet': same scale on both axes, centred; the bitmap follows by transform alone
-  const cw=svg.clientWidth, ch=svg.clientHeight; if(!cw||!ch) return;
-  const sc=Math.min(cw/v.w,ch/v.h), ox=(cw-v.w*sc)/2, oy=(ch-v.h*sc)/2;
-  bgC.style.transform=`translate(${(ox+(PX0-v.x)*sc).toFixed(2)}px,${(oy+(PY0-v.y)*sc).toFixed(2)}px) scale(${(sc/PS).toFixed(5)})`;
+  // the ground eases toward its target strength, then is redrawn at this exact view
+  if(Math.abs(pastTarget-pastK)>0.0005) pastK+=(pastTarget-pastK)*0.06; else pastK=pastTarget;
+  drawGround(v);
 }
 // the view drifts toward its goal on a time constant, and the goal only moves when it
 // meaningfully changes — so a twig appearing here or there does not nudge the whole frame
