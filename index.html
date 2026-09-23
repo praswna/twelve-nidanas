@@ -264,7 +264,9 @@ const RISE=6;
 function appearMeet(){
   // placed at once, and unlit; newLife() then kindles it: the core warms from the ground colour, fully opaque
   const parts=[meet,...meet.querySelectorAll('circle')];
-  parts.forEach(e=>e.style.transition='none'); placeMeet(); meet.style.setProperty('--life',0); meet.getBoundingClientRect();
+  parts.forEach(e=>e.style.transition='none'); placeMeet(); meet.style.setProperty('--life',0);
+  meet.querySelector('.core').setAttribute('r',0);            // before the meeting there is no point of contact at all
+  meet.getBoundingClientRect();
   parts.forEach(e=>e.style.transition='');
 }
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
@@ -327,6 +329,7 @@ function buildReeds(o){
 const RISE_MS=1600;
 // the meeting: the fire kindles at the point of contact, and the sentence of mutual dependence is said
 function kindle(){
+  meet.querySelector('.core').setAttribute('r',3.6);          // the point of contact comes into being
   newLife();
   line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
 }
