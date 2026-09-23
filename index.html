@@ -237,6 +237,11 @@ const RELIT=38;                  // ms between one segment catching and the next
 function drawSeg(root,seg){ ageRoot(root); seg.p.style.strokeDashoffset=0; later(()=>lightChain(seg),120); root.segs.push(seg); }
 const upG=$('up');
 const RISE=6;
+// the fire does not travel to the leaning: it appears there
+function appearMeet(){
+  meet.style.transition='none'; meet.style.opacity=0; placeMeet(); meet.getBoundingClientRect();
+  meet.style.transition=''; meet.style.opacity='';
+}
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
 // the pair also grows upward one step: 식 reaches up, then 명색, and they meet again a little higher
 // the stalk wanders: each step turns a little, never plunging back down into the roots
@@ -283,7 +288,7 @@ function buildReeds(o){
   a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
   [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
 }
-buildReeds({x:400,y:TOP}); setLevel(0); newLife();
+buildReeds({x:400,y:TOP}); setLevel(0); appearMeet(); newLife();
 
 // ---- twigs off the leaning ----
 function grow(p){
@@ -401,7 +406,7 @@ function birth(){
   // as the new pair takes root, that 유 is spent: it goes out in the same instant
   if(lingerYu){ lingerYu.classList.remove('linger'); lastTwig.g.appendChild(lingerYu); lingerYu=null; }
   MEET.x=o.x; MEET.y=o.y; upA=-Math.PI/2;
-  buildReeds({x:o.x,y:o.y}); setLevel(0); newLife();
+  buildReeds({x:o.x,y:o.y}); setLevel(0); appearMeet(); newLife();
   later(cycle,1800);
 }
 function cycle(){
