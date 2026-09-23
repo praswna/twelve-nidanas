@@ -6,6 +6,8 @@
     --ember:#c98a4a; --glow:#ffcf8a; --reed:#4a3e32;
   }
   html,body{height:100%}
+  /* dragging to pan must never select the labels or the caption */
+  body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
   body{margin:0;background:var(--bg);color:var(--ink);
     font-family:"Noto Serif KR","Apple SD Gothic Neo",serif;font-weight:300;
     display:flex;flex-direction:column;padding-inline:16px;box-sizing:border-box}
@@ -510,7 +512,7 @@ $('zFit').onclick=()=>{ zoom=1; panX=panY=0; goal=targetView(); };
 svg.addEventListener('wheel',e=>{ e.preventDefault(); setZoom(zoom*Math.pow(1.0015,-e.deltaY)); },{passive:false});
 // drag to move, pinch to zoom
 const pts=new Map(); let last=null, pinch=0;
-svg.addEventListener('pointerdown',e=>{ pts.set(e.pointerId,e); svg.setPointerCapture(e.pointerId); svg.classList.add('drag'); last={x:e.clientX,y:e.clientY}; });
+svg.addEventListener('pointerdown',e=>{ e.preventDefault(); pts.set(e.pointerId,e); svg.setPointerCapture(e.pointerId); svg.classList.add('drag'); last={x:e.clientX,y:e.clientY}; });
 svg.addEventListener('pointermove',e=>{
   if(!pts.has(e.pointerId)) return;
   pts.set(e.pointerId,e);
