@@ -152,7 +152,7 @@
 | 유 → 식의 증장 | 유가 들어올 때마다 불이 번쩍이고, 식·명색이 아래로 한 마디씩 뿌리내린다. |
 | 생 | 옛 뿌리 더미에서 새 쌍이 각자 올라와 맞닿는 순간 접점과 불이 생긴다. |
 | 노사 | 불의 밝기가 나이에 따라 흐려지고, 마지막에 꺼지며 접점이 사라지고 둘 다 회색으로 남는다. 마지막 유만 남았다가 새 쌍이 맞닿는 순간 꺼진다. |
-| 이전 생들 | 화면 전체에 깔린 회색 뿌리. 시간이 갈수록 물러난다(0.1 → 첫 죽음 뒤 0.01). |
+| 이전 생들 | 화면 전체에 깔린 회색 뿌리. 시간이 갈수록 물러난다(0.1 → 첫 죽음 뒤 0.01). 죽은 생의 뿌리와 줄기는 노사 때 이 배경에 스며들어 그 일부가 된다. |
 
 무명·행, 육입은 그리지 않는다. 무명은 화면 안의 사물이 아니라 **보는 방식**이다(아래 "한 줄기" 참고).
 
@@ -234,6 +234,7 @@ v76에서 교리·디자인·학습·구현·조형 다섯 관점으로 독립 �
 - 불의 **크기**는 유가 먹인 만큼 커지고, **밝기**는 나이에 따라 흐려진다. 먹여도 사그라든다. 이 생의 몸에 속한 것(촉, 잔가지 선, 켜진 식·명색, 줄기)은 함께 흐려지고, **수·애·취·유는 끝까지 밝다.**
 - 수명은 10~24 사이클로 무작위. **노사**에서 불이 꺼지고 접점이 사라지며 둘 다 회색으로 남는다. 마지막 유는 어둠 속에 남았다가, 새 쌍이 옛 뿌리에서 올라와 맞닿는 순간 꺼진다(생).
 - 켜진 것은 언제나 꺼진 것 위에 그려진다(층 구조). 맥동과 늙음은 투명도가 아니라 색으로 나타난다.
+- 이전 생들의 배경은 한 번 그린 그림(캔버스)이고, 죽은 생은 노사 때 그 그림에 스며든다. 그래서 살아 있는 그림(SVG)에는 늘 지금 생만 있다.
 - 화면은 나무를 따라 스스로 중심을 잡는다. 확대·축소·드래그, 일시정지(버튼·스페이스), 오른쪽 위 메뉴로 문서 열람.
 
 ## v76 점수와 그때의 진단
@@ -528,9 +529,9 @@ function kindle(){
 // They are never touched one by one, so they are drawn as a handful of paths — one pair per shade —
 // and fading them means recolouring a dozen elements, not thousands.
 const SHADES=8, PAST_LO=0.1, PAST_HI=0.35;
-const PX0=-500, PY0=-420, PW=1800, PH=1320, PS=1.5;        // the ground's extent in picture units, and bitmap pixels per unit
+const PX0=-500, PY0=-420, PW=1800, PH=1800, PS=1.5;        // the ground's extent in picture units, and bitmap pixels per unit
 const greyOf=k=>{ const bg=[0x0c,0x0d,0x0f], base=[0x6a,0x6b,0x70]; return `rgb(${base.map((c,i)=>Math.round(bg[i]+(c-bg[i])*k)).join(',')})`; };
-const bgC=$('bg');
+const bgC=$('bg'); let bgCtx=null;
 function seedPast(){
   const lines=Array.from({length:SHADES},()=>[]), tips=[];
   for(let k=0;k<80;k++) tips.push({x:R_(PX0,PX0+PW),y:R_(PY0,PY0+PH),a:Math.PI/2+R_(-1.6,1.6),s:Math.floor(Math.random()*SHADES)});
@@ -550,7 +551,7 @@ function seedPast(){
   }
   // paint once: lines, then round specks for the nodes, one shade of grey per bundle
   bgC.width=Math.round(PW*PS); bgC.height=Math.round(PH*PS); bgC.style.width=bgC.width+'px'; bgC.style.height=bgC.height+'px';
-  const g=bgC.getContext('2d'); g.scale(PS,PS); g.translate(-PX0,-PY0); g.lineCap='round';
+  const g=bgCtx=bgC.getContext('2d'); g.scale(PS,PS); g.translate(-PX0,-PY0); g.lineCap='round';
   lines.forEach((seg,i)=>{
     g.strokeStyle=greyOf(PAST_LO+(PAST_HI-PAST_LO)*i/(SHADES-1));
     g.lineWidth=1.6; g.beginPath(); seg.forEach(([x1,y1,x2,y2])=>{ g.moveTo(x1,y1); g.lineTo(x2,y2); }); g.stroke();
@@ -673,8 +674,26 @@ function die(){
   upG.querySelectorAll('path').forEach(p=>p.classList.add('dead'));
   // the 유 that led here stays lit through the dark, above everything, until the next life begins
   if(lastTwig){ lingerYu=lastTwig.nodes[LOOP.length-1].ng; twigsG.appendChild(lingerYu); lingerYu.classList.add('linger'); }
-  later(()=>{ line.textContent='노사'; },1600);
+  later(()=>{ line.textContent='노사'; bake(); },1600);
   later(birth,3400);
+}
+// what has died becomes ground: this life's roots and stalk are painted into the bitmap of earlier
+// lives and leave the living picture, so the SVG only ever carries the present life
+function bake(){
+  const g=bgCtx; if(!g) return;
+  const bg=[0x0c,0x0d,0x0f];
+  // the bitmap is shown at opacity pastK, so a colour is lifted by 1/pastK to land where it is now
+  const lift=c=>{ const m=/rgba?\(([^)]+)\)/.exec(c); if(!m) return c; const v=m[1].split(',').map(Number);
+    return `rgb(${v.slice(0,3).map((x,i)=>Math.min(255,Math.round(bg[i]+(x-bg[i])/pastK))).join(',')})`; };
+  const seg=/M([-\d.]+) ([-\d.]+) ?L([-\d.]+) ([-\d.]+)/;
+  document.querySelectorAll('#L path,#R path,#litPaths path,#up path').forEach(p=>{
+    const m=seg.exec(p.getAttribute('d')); if(!m) return;
+    g.strokeStyle=lift(getComputedStyle(p).stroke); g.lineWidth=1.6; g.beginPath(); g.moveTo(+m[1],+m[2]); g.lineTo(+m[3],+m[4]); g.stroke();
+  });
+  document.querySelectorAll('#reedNodes .node circle,#litNodes .node circle').forEach(c=>{
+    g.fillStyle=lift(getComputedStyle(c).fill); g.beginPath(); g.arc(+c.getAttribute('cx'),+c.getAttribute('cy'),+c.getAttribute('r'),0,Math.PI*2); g.fill();
+  });
+  [L,R,litPathsG,reedNodesG,litNodesG,upG].forEach(e=>e.innerHTML='');
 }
 // 생: a new pair takes root in the mass the earlier lives left behind
 function birth(){
