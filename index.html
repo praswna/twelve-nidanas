@@ -536,7 +536,7 @@ const bgC=$('bg'), bgCtx=bgC.getContext('2d');
 const GROUND=[];                                            // {color, alphaAt:pastK when it joined, lines:[[x1,y1,x2,y2]], dots:[[x,y,r]]}
 function seedPast(){
   const lines=Array.from({length:SHADES},()=>[]), tips=[];
-  for(let k=0;k<80;k++) tips.push({x:R_(PX0,PX0+PW),y:R_(PY0,PY0+PH),a:Math.PI/2+R_(-1.6,1.6),s:Math.floor(Math.random()*SHADES)});
+  for(let k=0;k<160;k++) tips.push({x:R_(PX0,PX0+PW),y:R_(PY0,PY0+PH),a:Math.PI/2+R_(-1.6,1.6),s:Math.floor(Math.random()*SHADES)});
   for(let step=0;step<16;step++){
     const next=[];
     tips.forEach(t=>{
@@ -549,7 +549,7 @@ function seedPast(){
         const tip={x:x2,y:y2,a,kids:0}; MASS.push(tip); next.push({...tip,s:t.s});
       }
     });
-    tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,200));
+    tips.splice(0,tips.length,...next.sort(()=>Math.random()-.5).slice(0,400));
   }
   lines.forEach((seg,i)=>GROUND.push({color:greyOf(PAST_LO+(PAST_HI-PAST_LO)*i/(SHADES-1)),alphaAt:1,lines:seg,dots:seg.map(([, ,x,y])=>[x,y,2.6])}));
   bgDirty=true;
