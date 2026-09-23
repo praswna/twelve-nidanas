@@ -23,6 +23,7 @@
     font:300 15px/1 inherit;border-radius:4px;cursor:pointer;transition:color .3s,border-color .3s}
   #zoom button:hover{color:#d8d3c8;border-color:#3a3b3f}
   #zPause{font-size:10px!important;letter-spacing:-2px;margin-right:6px}
+  #fps{position:absolute;left:10px;top:10px;z-index:3;font:300 11px/1 ui-monospace,Menlo,Consolas,monospace;color:#5a5b60;letter-spacing:.04em;pointer-events:none}
   /* a small menu, top right: the documents behind the picture */
   #menu{position:absolute;right:10px;top:10px;z-index:3}
   #mBtn{width:28px;height:28px;border:1px solid #26272b;background:#141518;color:#8c8d92;font:300 16px/1 inherit;border-radius:4px;cursor:pointer;transition:color .3s,border-color .3s}
@@ -131,6 +132,7 @@
     </g>
   </g>
 </svg>
+  <div id="fps"></div>
   <div id="menu"><button id="mBtn" title="문서" aria-label="문서">≡</button>
     <div id="mList"><button data-doc="doctrine">교리 점검</button><button data-doc="review">다섯 관점 리뷰 (v76)</button></div></div>
   <div id="doc"><button id="docClose" title="닫기" aria-label="닫기">×</button><div id="docBox"></div></div>
@@ -764,8 +766,11 @@ function applyView(v){
 // meaningfully changes — so a twig appearing here or there does not nudge the whole frame
 const EASE=900;           // ms to settle
 let goal=null, prevT=0;
+// frames per second, top left: the mean over the last second
+const fpsEl=$('fps'); let fpsN=0, fpsT=0;
 function tickView(now){
   const dt=prevT?Math.min(80,now-prevT):16.7; prevT=now;
+  fpsN++; if(now-fpsT>=1000){ fpsEl.textContent=Math.round(fpsN*1000/(now-fpsT))+' fps'; fpsN=0; fpsT=now; }
   const want=targetView();
   if(!goal) goal={...want};
   else{
