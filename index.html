@@ -474,7 +474,7 @@ function afterGrowth(){
 // 노사: the fire goes out; one reed cannot stand without the other, so both are left as grey traces
 function die(){
   line.textContent=says('생','노사'); pastFloor=0.01;
-  setLife(0);
+  setLife(0); meet.querySelector('.core').setAttribute('r',0);   // the point of contact goes with the leaning
   ageRoot(roots.L); ageRoot(roots.R);
   upG.querySelectorAll('path').forEach(p=>p.classList.add('dead'));
   // the 유 that led here stays lit through the dark, above everything, until the next life begins
