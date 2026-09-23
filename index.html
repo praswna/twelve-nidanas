@@ -288,7 +288,32 @@ function buildReeds(o){
   a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
   [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
 }
-buildReeds({x:400,y:TOP}); setLevel(0); appearMeet(); newLife();
+// saṃsāra has no discoverable beginning (SN 15.1): even the first life we see takes root among
+// the grey roots of lives before it
+function seedPast(){
+  const past={g:L,nodes:[]}, grey=FADE(9), tips=[];
+  for(let k=0;k<5;k++) tips.push({x:400+R_(-90,90),y:TOP-R_(70,140),a:Math.PI/2+R_(-0.8,0.8)});
+  for(let step=0;step<9;step++){
+    const next=[];
+    tips.forEach(t=>{
+      const n=Math.random()<0.3?2:1;
+      for(let j=0;j<n;j++){
+        const a=Math.PI/2+Math.max(-1.3,Math.min(1.3,(t.a-Math.PI/2)+R_(-0.6,0.6)));
+        const sg=segment(past,t,a,R_(10,17));
+        sg.p.style.transition='none'; sg.p.style.strokeDashoffset=0; sg.p.style.stroke=grey;
+        mark(sg.ng,null); sg.ng.classList.add('old'); sg.ng.querySelector('circle').style.fill=grey;
+        next.push(sg.tip);
+      }
+    });
+    tips.splice(0,tips.length,...next.slice(0,14));
+  }
+  // the first pair sprouts from the old mass, near the middle
+  const near=MASS.filter(t=>Math.abs(t.x-400)<60).sort((a,b)=>b.y-a.y);
+  const o=near[Math.floor(near.length*0.3)]||{x:400,y:TOP}; o.kids=(o.kids||0)+1;
+  return {x:o.x,y:o.y};
+}
+{ const o=seedPast(); MEET.x=o.x; MEET.y=o.y; buildReeds(o); }
+setLevel(0); appearMeet(); newLife();
 
 // ---- twigs off the leaning ----
 function grow(p){
