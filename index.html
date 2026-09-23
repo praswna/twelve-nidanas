@@ -263,8 +263,9 @@ const RISE=6;
 // the fire does not travel to the leaning: it appears there
 function appearMeet(){
   // placed at once, and unlit; newLife() then kindles it: the core warms from the ground colour, fully opaque
-  meet.style.transition='none'; placeMeet(); meet.style.setProperty('--life',0); meet.getBoundingClientRect();
-  meet.style.transition='';
+  const parts=[meet,...meet.querySelectorAll('circle')];
+  parts.forEach(e=>e.style.transition='none'); placeMeet(); meet.style.setProperty('--life',0); meet.getBoundingClientRect();
+  parts.forEach(e=>e.style.transition='');
 }
 function placeMeet(){ meet.style.transform=`translate(${MEET.x-400}px,${MEET.y-300}px)`; }
 // the pair also grows upward one step: 식 reaches up, then 명색, and they meet again a little higher
@@ -310,8 +311,24 @@ function buildReeds(o){
   // the first segment of each, already there: the leaning
   const a=growRoot('L',true), b=growRoot('R',true);
   a.forEach(sg=>roots.L.segs.push(sg)); b.forEach(sg=>roots.R.segs.push(sg));
-  [...a,...b].forEach(sg=>{ litPathsG.appendChild(sg.p); sg.p.style.transition='none'; sg.p.classList.add('fresh'); sg.p.style.strokeDashoffset=0; mark(sg.ng,'was'); sg.ng.classList.add('onfire'); litNodesG.appendChild(sg.ng); sg.p.getBoundingClientRect(); sg.p.style.transition=''; });
+  // each rises from its own foot toward the other; the leaning — and the fire — exist only once they meet
+  [...a,...b].forEach(sg=>{
+    litPathsG.appendChild(sg.p); sg.p.classList.add('fresh');
+    sg.p.setAttribute('d',`M${sg.tip.x.toFixed(1)} ${sg.tip.y.toFixed(1)} L${o.x.toFixed(1)} ${o.y.toFixed(1)}`);   // drawn foot → meeting point
+    const Ln=sg.p.getTotalLength();
+    sg.p.style.transition='none'; sg.p.style.strokeDasharray=Ln; sg.p.style.strokeDashoffset=Ln;
+    mark(sg.ng,'was'); sg.ng.classList.add('onfire'); litNodesG.appendChild(sg.ng);
+    sg.p.getBoundingClientRect();
+    sg.p.style.transition='stroke-dashoffset '+RISE_MS+'ms cubic-bezier(.3,0,.2,1)'; sg.p.style.strokeDashoffset=0;
+  });
   syncPulse([...a,...b].flatMap(sg=>[sg.p,sg.ng.querySelector('circle')]));
+  later(()=>[...a,...b].forEach(sg=>{ sg.p.style.transition=''; }),RISE_MS+50);
+}
+const RISE_MS=1600;
+// the meeting: the fire kindles at the point of contact, and the sentence of mutual dependence is said
+function kindle(){
+  newLife();
+  line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
 }
 // saṃsāra has no discoverable beginning (SN 15.1): even the first life we see takes root among
 // the grey roots of lives before it
@@ -346,7 +363,7 @@ function seedPast(){
   return {x:o.x,y:o.y};
 }
 { const o=seedPast(); MEET.x=o.x; MEET.y=o.y; buildReeds(o); }
-setLevel(0); appearMeet(); newLife();
+setLevel(0); appearMeet(); later(kindle,RISE_MS);
 
 // ---- twigs off the leaning ----
 function grow(p){
@@ -474,8 +491,8 @@ function birth(){
   // as the new pair takes root, that 유 is spent: it goes out in the same instant
   if(lingerYu){ lingerYu.classList.remove('linger'); lastTwig.g.appendChild(lingerYu); lingerYu=null; }
   MEET.x=o.x; MEET.y=o.y; upA=-Math.PI/2;
-  buildReeds({x:o.x,y:o.y}); setLevel(0); appearMeet(); newLife();
-  later(cycle,1800);
+  buildReeds({x:o.x,y:o.y}); setLevel(0); appearMeet(); later(kindle,RISE_MS);
+  later(cycle,RISE_MS+2000);
 }
 function cycle(){
   if(fallen) return;
@@ -557,6 +574,6 @@ svg.addEventListener('pointermove',e=>{
 const endPt=e=>{ pts.delete(e.pointerId); if(pts.size<2) pinch=0; if(!pts.size){ last=null; svg.classList.remove('drag'); } };
 svg.addEventListener('pointerup',endPt); svg.addEventListener('pointercancel',endPt);
 
-line.textContent='식을 조건으로 명색, 명색을 조건으로 식';
-later(cycle,2200);
+line.textContent='';
+later(cycle,RISE_MS+2400);
 </script>
