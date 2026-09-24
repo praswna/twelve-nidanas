@@ -103,6 +103,8 @@
   /* papañca: what one feels one perceives, thinks, proliferates — nameless thin sprays off 수 (MN 18) */
   .pap{fill:none;stroke:#5a4530;stroke-width:.8;stroke-linecap:round;transition:stroke-dashoffset .32s ease-out,stroke 1.2s}
   .pap.took{stroke-width:1.1;stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
+  /* once craving has taken one strand, the rest of the spray loses the mind and goes out */
+  .pap.left{stroke:#26272b}
   .tg.spent .pap{stroke:#232427}
   .tg.spent .pap.took{stroke:#2e2f33}
   /* the living twig carries the pulse out from the fire to its tip */
@@ -739,6 +741,7 @@ function takeStrand(tw){
   }
   if(!pick) pick=tw.pap[tw.pap.length-1];
   for(let q=pick;q;q=q.parent){ q.p.classList.add('took'); q.p.style.strokeWidth='1.1'; }
+  tw.pap.forEach(q=>{ if(!q.p.classList.contains('took')) q.p.classList.add('left'); });
   const ae=addNode(tw,'애',pick.x,pick.y,true);
   tw.segs.push(null);                                    // 애's line is the strand, already drawn
   // 취·유 continue in the strand's direction, bending back a little toward the twig's own heading
