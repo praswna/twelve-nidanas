@@ -684,7 +684,8 @@ function sprout(){
 }
 function addSeg(tw,from,to){
   const p=el('path',{class:'twig',d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
-  tw.g.appendChild(p); grow(p); tw.segs.push(p); return p;
+  tw.g.insertBefore(p,tw.g.querySelector('.node'));   // lines always beneath the twig's nodes, even ones added later
+  grow(p); tw.segs.push(p); return p;
 }
 function addNode(tw,name,x,y,tanha){
   const ng=el('g',{class:'node hid'+(tanha?' tanha':'')});      // 수·애·취·유: feeling and craving do not age
