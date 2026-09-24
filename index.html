@@ -88,24 +88,36 @@
   .name.show{opacity:1}
   /* twigs: 촉 수 애 취 유 */
   .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s,stroke-dashoffset .38s ease-out}
-  .twig.was{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
+  .twig.on{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}     /* the line into the link now alight */
+  .twig.was{stroke:#2e2f33}                                                   /* passed: cold grey, as if already spent */
   .node circle{fill:var(--dim);transition:fill .5s,opacity .6s}
-  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s}
+  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s;
+    paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}   /* a knock-out so the name reads over the sprays */
   .node.hid circle,.node.hid text{opacity:0}
   .node.lit circle{fill:color-mix(in srgb,var(--glow) var(--lifepct),var(--bg))}
   .node.lit text{fill:color-mix(in srgb,var(--ink) var(--lifepct),var(--bg))}
-  .node.was circle{fill:color-mix(in srgb,var(--ember) var(--lifepct),var(--bg))}
-  .node.was text{fill:color-mix(in srgb,#a89a86 var(--lifepct),var(--bg))}
+  .node.was circle{fill:#2e2f33}
+  .node.was text{fill:#45464b}
   /* 수·애·취·유 do not age: feeling (pain and grief come with 노사) and craving stay bright; only the door, 촉, dims */
   .node.tanha.lit circle{fill:var(--glow)} .node.tanha.lit text{fill:var(--ink)}
-  .node.tanha.was circle{fill:var(--ember)} .node.tanha.was text{fill:#a89a86}
+  .node.tanha.was circle{fill:#2e2f33} .node.tanha.was text{fill:#45464b}
+  /* papañca: what one feels one perceives, thinks, proliferates — nameless thin sprays off 수 (MN 18) */
+  .pap{fill:none;stroke:#5a4530;stroke-width:.8;stroke-linecap:round;transition:stroke-dashoffset .32s ease-out,stroke 1.2s}
+  .pap.took{stroke-width:1.1;stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
+  .pap.took.was{stroke:#2e2f33}
+  /* once craving has taken one strand, the rest of the spray loses the mind and goes out */
+  .pap.left{stroke:#26272b}
+  .tg.spent .pap{stroke:#232427}
+  .tg.spent .pap.took{stroke:#2e2f33}
+  /* the living twig carries the pulse out from the fire to its tip */
+  /* a twig arises once — 촉 to 유 — and is not lit again; only what persists (fire, roots, stalk) breathes */
   .tg{transition:opacity 1.4s}
   .tg.spent .twig{stroke:#2e2f33}
   .tg.spent .node circle{fill:#2e2f33}
   .tg.spent .node text{fill:#45464b}
   .gone .tg{opacity:0}
   /* the last 유 of a life outlasts the fire: it is what conditions the next birth */
-  .node.linger circle{fill:var(--ember)} .node.linger text{fill:#a89a86}
+  .node.linger circle,.node.tanha.linger circle{fill:var(--ember)} .node.linger text,.node.tanha.linger text{fill:#a89a86}
   /* 유 and the fire answer each other */
   #meet .core{transform-box:fill-box;transform-origin:center}
   .node.yu circle{transform-box:fill-box;transform-origin:center;animation:yuPulse 1.1s cubic-bezier(.2,.8,.3,1)}
@@ -151,6 +163,8 @@
 |---|---|
 | 식 ↔ 명색 | 서로 기대어 선 두 갈대. 접점에 불이 있다. |
 | 촉 → 수 → 애 → 취 → 유 | 접점의 불에서 돋는 잔가지. 하나씩 켜지고, 다 타면 회색 흔적으로 가라앉는다. |
+| 희론 (papañca) | 수 마디에서 이름 없는 가는 가지들이 확 퍼져 갈라지고 또 갈라진다. 애는 미리 정해진 자리가 아니라 **그 가지 끝 중 하나**에 붙고, 그 갈래가 잔가지의 선이 된다. 취·유는 거기서 이어진다. |
+| 세 가지 수 | 잔가지마다 느낌의 종류가 다르고 퍼짐도 다르다. 즐거운 느낌은 넓고 풍성하게 바깥으로, 괴로운 느낌은 좁고 촘촘하게 되감기며, 덤덤한 느낌은 드물고 짧게 몇 가닥만. 이름표는 없다. |
 | 유 → 식의 증장 | 유가 들어올 때마다 불이 번쩍이고, 식·명색이 아래로 한 마디씩 뿌리내린다. |
 | 생 | 옛 뿌리 더미에서 새 쌍이 각자 올라와 맞닿는 순간 접점과 불이 생긴다. |
 | 노사 | 불의 밝기가 나이에 따라 흐려지고, 마지막에 꺼지며 접점이 사라지고 둘 다 회색으로 남는다. 마지막 유만 남았다가 새 쌍이 맞닿는 순간 꺼진다. |
@@ -176,6 +190,11 @@
 | 새 생이 옛 뿌리 더미에 뿌리박음 | AN 3.76 "업은 밭, 식은 씨앗, 갈애는 물기" |
 | 첫 생도 이미 있던 회색 뿌리 사이에서 돋음 | SN 15.1 "윤회는 시작을 알 수 없다(anamatagga). 첫 지점이 드러나지 않는다" |
 | 옛 뿌리가 시간이 갈수록 0.1, 0.01로 흐려짐 | 지나간 업의 자취는 남되, 사건 자체는 사라진다(상좌부·경량부의 상속관) |
+| 수 뒤에 이름 없는 퍼짐이 있고, 그 한 갈래만 애로 감 | MN 18(꿀덩이 경): "느낀 것을 지각하고, 지각한 것을 생각하고, 생각한 것을 희론한다. 그것을 원인으로 희론-지각-명칭(papañca-saññā-saṅkhā)이 사람을 덮친다." 이름을 붙이지 않은 것은 saṅkhā(명칭)가 곧 희론의 한 몸이기 때문이다. 희론은 늙지 않는다(몸이 아니라 마음) |
+| 애는 퍼진 가지 끝 하나에 붙고, 나머지 퍼짐은 꺼져 회색으로 남는다 | SN 12.2 갈애는 대상을 향한다. MN 148 느낌을 "기뻐하고 환영하고 붙잡을 때" 잠재성향이 따른다 — 붙잡음은 선택. MN 20 주의를 두지 않은 생각은 가라앉는다. 꺼진 것이 남는 것은 잠재성향(anusaya)이 남기 때문 |
+| 잔가지는 한 번 켜지고(촉→유) 다시 켜지지 않는다; 숨 쉬는 것은 뿌리·줄기·불뿐 | 찰나의 잇달음. "이것이 일어나므로 저것이 일어난다"는 한 번에 하나이고, 같은 촉은 두 번 일어나지 않는다 — 새 촉은 새 잔가지다. 쌓인 것(뿌리·줄기)은 지속하므로 함께 숨 쉬고, 찰나(잔가지)는 지나간다 |
+| 맥이 불에서 뿌리·줄기로 밖으로 흐른다 (먼 곳이 늦게) | 조건의 방향. 촉은 기댐에서 일어나 수·애·취·유로 간다. 유의 번쩍임은 안으로 들어오니, 나가는 흐름과 들어오는 흐름이 한 그림에 있다 |
+| 수가 셋이고 퍼짐이 그에 따라 다르다 | SN 36: 락수·고수·불고불락수. SN 36.6, MN 148: 즐거운 느낌엔 탐의 잠재성향이, 괴로운 느낌엔 진의 잠재성향이, 덤덤한 느낌엔 치의 잠재성향이 따른다 — 무엇을 느끼느냐가 어떻게 불어나느냐를 정한다 |
 | 캡션 "~을 조건으로 ~이 있다" | 정형구 그대로. 명색→촉은 DN 15의 순서 |
 
 ## 한 줄기 — 무명의 시선
@@ -188,6 +207,10 @@
 > 부품들이 모일 때 '수레'라는 말이 있듯, 무더기들이 있을 때 '중생'이라는 관습이 있다." — SN 5.10 (와지라 비구니)
 
 한 줄기가 "수레"라는 이름이고, 아래 두 갈래가 부품이다.
+
+재료로 보면 이 줄기는 **촉과 식·명색이 합쳐져 쌓인 것**이다. 잔가지마다 수에서 퍼졌다가 한 갈래로 모인 희론이 애·취·유가 되어 불로 들어가고, 그때마다 줄기가 한 마디 자란다.
+MN 18의 뒤집힌 문법 — "희론이 사람을 덮친다" — 이 여기서 형태가 된다: 사람이 희론을 만드는 것이 아니라 퍼진 것이 모여 사람(줄기)이 되고, 그 줄기 끝에서 다음 촉이 돋아 또 퍼진다.
+줄기는 희론의 결과이자 다음 희론의 자리다. 그래서 "과거로 뻗는 희론"을 따로 그리지 않는다 — 줄기가 그것이다. 괴로움의 무더기(dukkhakkhandha).
 
 ## 학파에 따라 갈리는 곳
 
@@ -205,6 +228,65 @@
 환멸문의 실마리는 이 그림 안에 이미 있다. MN 72: 불은 연료가 다하면 꺼질 뿐, 어디로 가지 않는다.
 지금 죽음은 불을 끄지만 **연료(유)가 남아 있어 다시 붙는다.** 열반은 연료가 다해 꺼지고 다시 붙지 않는 불이다.
 구현하려면 (1) 수에서 애로 가지 않는 잔가지가 생겨야 하고, (2) 그런 생은 뿌리를 남기지 않아 다음 쌍이 돋지 않아야 한다.
+그 (1)의 자리는 이제 그림에 있다. MN 18은 "기뻐할 것, 환영할 것, 붙잡을 것이 없으면 그것이 잠재성향의 끝"이라 한다 — **희론이 일어나지 않는 수**다. 퍼지지 않고 멎는 잔가지가 곧 환멸의 씨앗이다.
+
+## 왜 수에서만 퍼지는가 (문답 기록)
+
+물음: 촉도 애도 아니고, 왜 수에서만 희론이 퍼지는가?
+답: 수가 **갈림길**이기 때문이다.
+
+- **촉은 만남이다.** 눈·형색·안식이 만나는 사건. 마음이 더한 것이 아니라 조건이 갖춰지면 일어나는 것. 만남은 하나라 퍼질 것이 없다.
+- **수는 만남의 맛이다.** 즐겁다·괴롭다·덤덤하다. 여기까지도 일어나는 것이지만, 이제 마음이 반응할 거리가 생겼다. 맛이 있으니 더 맛보고, 되새기고, 이름 붙이고, 비교하고, 과거와 미래의 맛으로 뻗는다.
+- **애는 이미 고른 것이다.** 퍼진 것 중 하나를 붙잡은 상태. 애는 퍼지는 것이 아니라 모이는 것이다 — 그래서 퍼진 가지 중 한 갈래만 애로 이어진다.
+
+MN 18의 문장이 이 순서다: "**느낀 것을** 지각하고, 지각한 것을 생각하고, 생각한 것을 희론한다." 희론의 재료는 느낌이지 촉이나 애가 아니다.
+
+12연기의 "수를 조건으로 애가 있다"는 한 마디 안에 상→심→희론이 접혀 있다. 12연기는 건너뛰어 말하고 MN 18은 펼쳐 말한다.
+그래서 수에서만 퍼지는 것은 **수→애 화살표 안에 무엇이 들어 있는가**를 그리는 것이다. 다른 마디 사이에는 그런 접힌 것이 없다.
+
+SN 36.6의 두 화살도 수에서 갈라진다. 첫 화살(느낌)은 누구나 맞고, 둘째 화살(느낌에 대한 슬픔·저항·되새김 = 희론)은 배운 이는 맞지 않는다.
+**수까지는 법이 준 것이고 수 다음부터는 마음이 보태는 것**이라, 유전과 환멸이 갈리는 자리가 정확히 여기다.
+촉에서는 갈릴 수 없고(만남은 막을 수 없다), 애에서는 이미 늦었다(붙잡은 뒤다).
+
+"수만 퍼진다"의 뜻: **여기가 느낌이 나(自我)로 부풀어 오르는 자리이고, 동시에 부풀지 않을 수 있는 유일한 자리다.**
+
+## 환멸문의 설계 — 퍼지지 않는 수는 어떻게 나타나는가 (문답 기록, 미구현)
+
+물음: 퍼지지 않는 수는 기계적으로 나타나는가, 법으로 나타나는가?
+답: 우연도 아니고, 누가 골라서도 아니고, **조건이 갖춰지면** 나타난다. 환멸문도 유전문과 똑같이 법이다.
+
+- **환멸에도 연기가 있다.** SN 12.23(근거의 경): 노사에 이어 "괴로움을 조건으로 믿음, 믿음을 조건으로 기쁨, 희열, 경안, 즐거움, 삼매, 여실지견, 염리, 이욕, 해탈, 누진지." 환멸은 사슬 밖의 기적이 아니라 사슬의 연장이며, 첫 고리는 **괴로움이 믿음의 조건**이라는 것이다.
+- **퍼지지 않는 수는 훈련된 것이다.** SN 36.6(화살 경): 범부는 괴로운 느낌에 두 화살(몸의 느낌 + 마음의 슬픔·저항)을 맞고, 배운 제자는 한 화살만 맞는다. "느낌을 느낄 뿐." 조건은 "배웠다(sutavā)".
+- **배움의 조건은 둘이다.** MN 43: 바른 견해의 조건은 남의 말(parato ghosa)과 여리작의(yoniso manasikāra). 밖에서 오는 것과 안에서 기울이는 것. 둘 다 "내가 결정한다"가 아니다.
+
+그림으로 옮길 때 조건을 무엇으로 둘지:
+
+| 조건 | 근거 | 평가 |
+|---|---|---|
+| 무작위 확률 | 없음 | "운"으로 읽힌다. 조건이 없으니 틀리다. 뺀다. |
+| 괴로움의 축적 (생의 수, 흐려진 불) | SN 12.23 "괴로움을 조건으로 믿음" | 자동이고 조건이 이미 그림 안에 있다. 다만 괴로움이 반드시 믿음을 낳지는 않으므로 비율은 낮게. |
+| 보는 사람의 주의 (수 마디를 짚고 있음) | MN 43 parato ghosa — 밖에서 오는 조건 | 사띠의 성질과 맞다(주의가 있는 동안만 퍼지지 않는다). 게임이 될 위험. |
+
+퍼지지 않는 수의 뒷일은 조건과 무관하게 정해진다: 수에서 멎으면 애·취·유가 없고, 불을 먹이지 않고, 뿌리가 자라지 않는다.
+그런 잔가지가 많은 생은 죽을 때 남는 유가 적고, 유가 없으면 다음 쌍이 돋지 않는다 — MN 72 "연료가 다해 꺼지는 불".
+환멸은 한 번의 사건이 아니라 **비율이 기우는 것**으로 그린다.
+
+정한 것: 괴로움의 축적으로 시작하고(낮은 비율), 보는 사람의 주의는 그다음에 신중히. 비율을 생의 수에 걸지 이 생의 노년에 걸지는 미정(경전은 둘 다 허용한다 — 노년의 출가가 많다).
+
+## 조형 규칙 중 뜻에 닿는 것
+
+- **애는 앞으로 뻗는 갈래에만 붙는다** (잔가지 방향에서 약 63° 안). 꺾임을 막으려고 둔 조형 규칙이다. 뜻으로 읽으면 "갈애는 뒤(과거)를 향하지 않는다"가 되는데, 경전은 갈애가 과거에도 향한다고 한다(MN 18 과거·미래·현재). 그림에서 과거 방향은 줄기가 맡고 있으므로 어긋남은 아니고 범위를 좁힌 것이다.
+- **퍼짐이 살아 있는 가지의 규칙**(길이 비율·가늘어짐·좌우 번갈아·휨)을 따르는 것은 교리 사항이 아니다. 다만 "법대로 자란다"는 원칙과 결이 같다.
+
+## 후보 — 식의 확립 (미구현)
+
+물음: 식·명색도 수처럼 퍼졌다가 하나를 골라 가야 하는가?
+답: 같은 모양으로는 아니다. 수의 퍼짐은 희론(마음이 불리는 것)이고 뿌리는 쌓임(식이 머물러 자라는 것)이라, 지금은 리듬으로 갈려 있다 — 잔가지는 한 점이 지나가고 뿌리는 다 켜진 채 숨 쉰다. 뿌리도 퍼졌다 고르면 두 층이 같은 문법이 되어 희론이 특별한 것이 아니게 된다.
+
+근거가 있는 형태는 따로 있다. SN 12.38: "의도하고, 계획하고, 잠재하는 것 — 그것이 식이 머물 대상이 된다. 대상이 있으면 식이 확립(patiṭṭhā)된다. 식이 확립되어 자라면 명색이 내려온다."
+식은 어딘가에 발을 딛는다 — 불리는 것이 아니라 자리 잡는 것. 그림으로는: 유가 들어올 때 뿌리 끝에 아주 작은 싹 두셋이 희미하게 돋고(식이 머물 수 있는 자리들), 식이 그중 하나에 자리 잡으면 그것이 새 마디로 자라고 나머지는 사라진다. 소리 없이, 짧게, 잔가지의 퍼짐과 닮지 않게.
+
+정한 것: 지금은 뿌리를 그대로 둔다. 뿌리의 조용함이 잔가지의 소란과 대비를 만든다. 뿌리를 더 다듬을 때 이 형태를 후보로 둔다.
 
 ## 이미 고친 것 (기록)
 
@@ -216,6 +298,7 @@
 | 첫 생이 빈 바닥에서 시작했다 — "태초"로 읽힘(SN 15.1) | 회색 뿌리 더미 위에서 돋는다 |
 | 시작할 때 이미 기댐과 불이 있었다 | 둘이 따로 올라와 맞닿는 순간 접점과 불이 생긴다. 재생도 같다 |
 | 노사 뒤 옛 접점이 검은 마디로 남아 있었다 | 불이 꺼질 때 접점도 함께 사라진다 |
+| 잔가지가 자라는 중에도 숨마다 불꽃이 촉→유를 다시 지나갔고, 유 뒤에도 몇 숨 되풀이됐다 — "같은 촉이 다시 일어난다"로 읽힘 | 뺐다. 잔가지는 한 번 켜지고 유 한 박자 뒤 가라앉는다. 숨 쉬는 것은 뿌리·줄기·불뿐 |
 
 </script>
 <script type="text/markdown" id="md-review">
@@ -231,11 +314,12 @@ v76에서 교리·디자인·학습·구현·조형 다섯 관점으로 독립 �
 - 그 위로 **식과 명색이 각자 올라와** 서로를 향해 기울고, **맞닿는 순간 접점과 불이 생긴다.** 그 전엔 불이 없다.
   문장 "식을 조건으로 명색, 명색을 조건으로 식"이 이때 뜬다.
 - 불(기댐)에서 **촉→수→애→취→유** 잔가지가 하나씩 돋아 켜지고, 다 타면 맨 아래 층으로 가라앉아 회색 흔적이 된다.
+- 수에서 **이름 없는 가는 가지들이 퍼져** 갈라지고 또 갈라진다(희론, MN 18). 살아 있는 가지의 규칙대로 자란다. 애는 그 가지 끝 하나에 붙어 잔가지가 거기서 꺾이고, 나머지 퍼짐은 꺼진다. 잔가지는 한 번 켜지고 유 한 박자 뒤 가라앉는다.
 - 유에 닿으면 불이 번쩍이고 식·명색이 **아래로 한 마디씩 뿌리내린다.** 새 마디에서 기댐까지의 길이 회색이 됐다가 기댐 쪽부터 도화선처럼 다시 켜지고, 위로 뻗는 줄기까지 한 길로 이어져 불의 숨과 같은 위상으로 맥동한다.
 - 기댐에서 **한 가닥 줄기**가 이리저리 뻗고 불이 그 끝을 따라간다(무명의 시선 — DOCTRINE.md).
 - 불의 **크기**는 유가 먹인 만큼 커지고, **밝기**는 나이에 따라 흐려진다. 먹여도 사그라든다. 이 생의 몸에 속한 것(촉, 잔가지 선, 켜진 식·명색, 줄기)은 함께 흐려지고, **수·애·취·유는 끝까지 밝다.**
 - 수명은 10~24 사이클로 무작위. **노사**에서 불이 꺼지고 접점이 사라지며 둘 다 회색으로 남는다. 마지막 유는 어둠 속에 남았다가, 새 쌍이 옛 뿌리에서 올라와 맞닿는 순간 꺼진다(생).
-- 켜진 것은 언제나 꺼진 것 위에 그려진다(층 구조). 맥동과 늙음은 투명도가 아니라 색으로 나타난다.
+- 켜진 것은 언제나 꺼진 것 위에 그려진다(층 구조). 맥동과 늙음은 투명도가 아니라 색으로 나타난다. 맥은 불에서 뿌리·줄기로 밖으로 흐른다(먼 곳이 늦게).
 - 이전 생들의 배경은 한 번 그린 그림(캔버스)이고, 죽은 생은 노사 때 그 그림에 스며든다. 그래서 살아 있는 그림(SVG)에는 늘 지금 생만 있다.
 - 화면은 나무를 따라 스스로 중심을 잡는다. 확대·축소·드래그, 일시정지(버튼·스페이스), 오른쪽 위 메뉴로 문서 열람.
 
@@ -421,18 +505,30 @@ function ageRoot(root){ root.segs.forEach(sg=>{
 }); }
 // make elements' pulse throb in phase with the leaning's breath
 // (only once their own animation has started; an unstarted one would be re-timed by the browser)
-function syncPulse(els){
-  requestAnimationFrame(()=>{
-    // pick the breath itself, not an r/stroke transition that may also be running on the halo
-    const ref=meet.querySelector('.halo').getAnimations().find(a=>a.animationName==='breathe');
-    if(!ref||ref.startTime==null) return;
-    els.forEach(e=>e.getAnimations().forEach(an=>{
-      if(!/^chain/.test(an.animationName)) return;
-      // a just-created pulse is still pending; wait until it has started, then re-time it to the breath
-      an.ready.then(()=>{ try{ an.startTime=ref.startTime; }catch(_){} });
-    }));
-  });
+// the pulse leaves the fire and travels outward along everything alive: each element's breath starts
+// later by its distance from the fire along the path (down the stalk, down the roots, out along the twig)
+const FLOW=9;                                              // ms of delay per picture unit: the speed of the wave
+const segEnds=p=>{ const n=(p.getAttribute('d')||'').match(/-?[\d.]+/g); return n&&n.length>=4?[+n[0],+n[1],+n[n.length-2],+n[n.length-1]]:null; };
+function flowSync(){
+  const ref=meet.querySelector('.halo').getAnimations().find(a=>a.animationName==='breathe');
+  if(!ref||ref.startTime==null) return;
+  const set=(e,d)=>{ if(!e) return; e.getAnimations().forEach(an=>{ if(!/^chain/.test(an.animationName)) return;
+    an.ready.then(()=>{ try{ an.startTime=ref.startTime+d*FLOW; }catch(_){} }); }); };
+  // the stalk, from the Λ up to the fire: nearer the fire, earlier
+  const ups=[...upG.querySelectorAll('path:not(.dead)')].map(p=>({p,e:segEnds(p)})).filter(q=>q.e);
+  const lens=ups.map(q=>Math.hypot(q.e[2]-q.e[0],q.e[3]-q.e[1])), T=lens.reduce((a,b)=>a+b,0);
+  let c=0; ups.forEach((q,k)=>{ set(q.p,T-(c+lens[k]/2)); c+=lens[k]; });
+  // the roots: the stalk's length, then down the chain from the leaning
+  const memo=new Map();
+  const dist=sg=>{ if(memo.has(sg)) return memo.get(sg); const e=segEnds(sg.p); const l=e?Math.hypot(e[2]-e[0],e[3]-e[1]):14;
+    const d=(sg.from&&sg.from.seg?dist(sg.from.seg):0)+l; memo.set(sg,d); return d; };
+  for(const r of [roots.L,roots.R]) if(r) for(const sg of r.segs) if(sg.p.classList.contains('fresh')){
+    const d=dist(sg), e=segEnds(sg.p), l=e?Math.hypot(e[2]-e[0],e[3]-e[1]):14;
+    set(sg.p,T+d-l/2); set(sg.ng.querySelector('circle'),T+d);
+  }
+
 }
+function syncPulse(){ requestAnimationFrame(flowSync); }
 function lightChain(seg){
   // the path from the leaning down to the new tip
   const chain=[]; for(let s=seg; s; s=s.from&&s.from.seg) chain.push(s);
@@ -488,6 +584,7 @@ function setLevel(n){
   const k=Math.min(1,level/14);
   const bs=(3.2-k*2.3).toFixed(2)+'s'; meet.style.setProperty('--breath',bs); pair.style.setProperty('--breath',bs);
   meet.style.setProperty('--depth',(1.3-k*0.2).toFixed(3));
+  syncPulse();
 }
 // the pair grows one step down: 식 root, then 명색 root
 function growPair(done){
@@ -604,38 +701,75 @@ function clearance(x,y,a,len){
   }
   return m;
 }
+// a twig is built one segment at a time: 촉 and 수 are laid out from the leaning; then feeling
+// proliferates, and 애 is wherever craving lands — the tip of one strand of that spray; 취·유 follow on from there
+const TSTEP=22;
 function sprout(){
   // 촉 arises at the being: every twig starts at the meeting point
-  const len=R_(95,125);
   let best=null;
   for(let k=0;k<18;k++){
     const a=-Math.PI/2+R_(-1.5,1.5);
-    const c=clearance(MEET.x,MEET.y,a,len);
+    const c=clearance(MEET.x,MEET.y,a,110);
     if(!best||c>best.c) best={a,c};
   }
   if(!best) return null;
   const g=el('g',{class:'tg'}); twigsG.appendChild(g);
-  const x2=MEET.x+Math.cos(best.a)*len, y2=MEET.y+Math.sin(best.a)*len;
-  const b=best.a+R_(-.4,.4), cx=MEET.x+Math.cos(b)*len*.5, cy=MEET.y+Math.sin(b)*len*.5;
-  const p=el('path',{class:'twig',d:`M${MEET.x} ${MEET.y} Q${cx} ${cy} ${x2} ${y2}`}); g.appendChild(p);
-  const Ln=grow(p);
-  const nodes=LOOP.map((n,i)=>{
-    const t=p.getPointAtLength(Ln*(i+1)/LOOP.length);
-    const ng=el('g',{class:'node hid'+(i>=1?' tanha':'')});   // 수·애·취·유: feeling and craving do not age
-    ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:3.6}));
-    const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx); g.appendChild(ng);
-    ALL.push({x:t.x,y:t.y});
-    return {ng,name:n,x:t.x,y:t.y};
-  });
-  return {g,p,nodes,Ln};
+  const tw={g,nodes:[],segs:[],pap:[],a:best.a,x0:MEET.x,y0:MEET.y};
+  const p1={x:MEET.x+Math.cos(best.a)*TSTEP, y:MEET.y+Math.sin(best.a)*TSTEP};
+  const a2=best.a+R_(-.35,.35);
+  const p2={x:p1.x+Math.cos(a2)*TSTEP, y:p1.y+Math.sin(a2)*TSTEP};
+  addSeg(tw,MEET,p1); addNode(tw,'촉',p1.x,p1.y,false);
+  addSeg(tw,p1,p2);   addNode(tw,'수',p2.x,p2.y,true);
+  return tw;
+}
+function addSeg(tw,from,to){
+  const p=el('path',{class:'twig',d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
+  tw.g.insertBefore(p,tw.g.querySelector('.node'));   // lines always beneath the twig's nodes, even ones added later
+  grow(p); tw.segs.push(p); return p;
+}
+function addNode(tw,name,x,y,tanha){
+  const ng=el('g',{class:'node hid'+(tanha?' tanha':'')});      // 수·애·취·유: feeling and craving do not age
+  ng.appendChild(el('circle',{cx:x,cy:y,r:3.6}));
+  const tx=el('text',{x,y:y-8}); tx.textContent=name; ng.appendChild(tx); tw.g.appendChild(ng);
+  ALL.push({x,y});
+  const n={ng,name,x,y}; tw.nodes.push(n); return n;
+}
+// craving lands: one strand of the spray becomes the twig's own line, its tip becomes 애, and 취·유 go on from there
+function takeStrand(tw){
+  const su=tw.nodes[1];
+  const tips=tw.pap.filter(q=>!tw.pap.some(r=>r.parent===q));
+  const ux=Math.cos(tw.a), uy=Math.sin(tw.a);
+  // craving lands on a strand that is still heading on, not one that has curled sideways or back:
+  // score by how far it reaches forward and how closely its last direction agrees with the twig's
+  const endDir=t=>{ const px=t.parent?t.parent.x:su.x, py=t.parent?t.parent.y:su.y; return Math.atan2(t.y-py,t.x-px); };
+  let pick=null, bs=-1e9;
+  for(const t of tips){
+    const agree=Math.cos(endDir(t)-tw.a); if(agree<0.45) continue;
+    const sc=(t.x-su.x)*ux+(t.y-su.y)*uy+agree*24+R_(0,10); if(sc>bs){ bs=sc; pick=t; }
+  }
+  if(!pick) pick=tw.pap[tw.pap.length-1];
+  for(let q=pick;q;q=q.parent){ q.p.classList.add('took'); q.p.style.strokeWidth='1.1'; }
+  tw.pap.forEach(q=>{ if(!q.p.classList.contains('took')) q.p.classList.add('left'); });
+  const ae=addNode(tw,'애',pick.x,pick.y,true);
+  tw.segs.push(null);                                    // 애's line is the strand, already drawn
+  // 취·유 continue in the strand's direction, bending back a little toward the twig's own heading
+  let a=Math.atan2(pick.y-(pick.parent?pick.parent.y:su.y), pick.x-(pick.parent?pick.parent.x:su.x));
+  let from=ae;
+  for(const name of ['취','유']){
+    // carry on from the strand: turn back toward the twig's heading only gently, never a sharp kink
+    let d=Math.atan2(Math.sin(tw.a-a),Math.cos(tw.a-a));
+    a+= Math.max(-0.28,Math.min(0.28,d*0.3)) + R_(-.1,.1);
+    const to={x:from.x+Math.cos(a)*TSTEP, y:from.y+Math.sin(a)*TSTEP};
+    addSeg(tw,from,to); from=addNode(tw,name,to.x,to.y,true);
+  }
 }
 function burn(tw,i,prev){
   if(fallen) return;
-  const n=tw.nodes[i];
-  if(i===0) tw.p.classList.add('was');
+  const n=tw.nodes[i], seg=tw.segs[i];
   // the twig grows out to this node, then the node appears
-  tw.p.style.strokeDashoffset=tw.Ln*(1-(i+1)/tw.nodes.length);
+  if(seg){ seg.classList.add('on'); seg.style.strokeDashoffset=0; }
   mark(n.ng,'lit'); line.textContent=says(prev,n.name);
+  const hold=n.name==='수'?papanca(tw,i):0;              // 수 → 상 → 심 → 희론: the spray, then 애 takes one strand
   if(n.name==='유'){
     // 유 and the leaning answer each other: both flare, a thread runs between them for a moment
     n.ng.classList.add('yu'); lastTwig=tw;
@@ -644,12 +778,51 @@ function burn(tw,i,prev){
     later(()=>growPair(afterGrowth), STEP);
   }
   later(()=>{
-    mark(n.ng,'was');
-    if(i<tw.nodes.length-1){ burn(tw,i+1,n.name); return; }
-    feed(tw);
-  },STEP);
+    mark(n.ng,'was');                                    // this link has passed: it and its line go cold
+    if(seg) seg.classList.add('was');
+    if(n.name==='애') tw.pap.forEach(q=>{ if(q.p.classList.contains('took')) q.p.classList.add('was'); });
+    if(n.name==='수') takeStrand(tw);
+    if(i<LOOP.length-1){ burn(tw,i+1,n.name); return; }
+    feed(tw);                                            // arisen once, 촉 to 유; what it leaves is already in the fire and the roots
+  },STEP+hold);
 }
-// at 유 the twig ceases; the leaning has grown by what was craved
+const PAP_MS=520;
+// feeling proliferates: from the 수 node a spray of thin nameless branches, each forking again,
+// drawn on level by level. They stay as part of the twig and grey with it when it is spent.
+// feeling is of three kinds (SN 36), and each proliferates in its own way: pleasant feeling spreads
+// wide and lush, reaching outward (the tendency to lust); painful feeling grows tight and jagged,
+// curling back on itself (aversion); neutral feeling barely proliferates — a few short strands (ignorance)
+const KINDS={
+  sukha:   {stems:[3,4], len:[18,24], depth:4, spread:[0.35,1.1],  fork:0.75, side:[0.5,0.7],  curv:[0.04,0.10], ratio:0.80, thin:0.84},
+  dukkha:  {stems:[2,3], len:[10,14], depth:4, spread:[0.9,1.7],   fork:0.9,  side:[0.7,1.0],  curv:[0.18,0.32], ratio:0.72, thin:0.86},
+  upekkha: {stems:[1,2], len:[12,16], depth:2, spread:[0.4,1.2],   fork:0.35, side:[0.5,0.7],  curv:[0.03,0.08], ratio:0.7,  thin:0.8},
+};
+function papanca(tw,i){
+  const n=tw.nodes[i], from=tw.nodes[i-1];
+  const base=Math.atan2(n.y-from.y,n.x-from.x);
+  const r=Math.random(), K=tw.kind=r<0.4?'sukha':r<0.75?'dukkha':'upekkha', k=KINDS[K];
+  tw.g.dataset.kind=K;
+  let count=0;
+  const spray=(x,y,a,len,w,depth,delay,parent,side,curv)=>{
+    const x2=x+Math.cos(a)*len, y2=y+Math.sin(a)*len;
+    const mx=(x+x2)/2-Math.sin(a)*len*curv, my=(y+y2)/2+Math.cos(a)*len*curv;
+    const p=el('path',{class:'pap',d:`M${x.toFixed(1)} ${y.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`,style:`stroke-width:${w.toFixed(2)}`});
+    tw.g.insertBefore(p,tw.g.firstChild);              // beneath the twig's own line and nodes
+    grow(p); later(()=>{ p.style.strokeDashoffset=0; },delay); count++;
+    const q={p,x:x2,y:y2,parent}; tw.pap.push(q);
+    if(depth<=0||count>56) return;
+    // the leader keeps its heading, bending on with its curve (painful feeling curls back harder)
+    spray(x2,y2,a+curv*0.9+R_(-0.12,0.12),len*k.ratio,w*k.thin,depth-1,delay+110,q,-side,curv*R_(0.7,1.1));
+    // a side branch at a steady angle, alternating sides, shorter and thinner
+    if(depth>=1&&Math.random()<k.fork) spray(x2,y2,a+side*R_(k.side[0],k.side[1]),len*0.62,w*0.66,depth-2,delay+110,q,side,side*curv);
+  };
+  const stems=k.stems[0]+Math.floor(Math.random()*(k.stems[1]-k.stems[0]+1));
+  for(let j=0;j<stems;j++){
+    const side=j%2?1:-1, a=base+side*R_(k.spread[0],k.spread[1]);
+    spray(n.x,n.y,a,R_(k.len[0],k.len[1]),1.0,k.depth,60,null,-side,side*R_(k.curv[0],k.curv[1]));
+  }
+  return PAP_MS;
+}
 const MAXSPENT=40;
 function feed(tw){
   tw.g.classList.add('spent'); spentG.appendChild(tw.g);   // the event is over; it sinks beneath everything as a grey trace
