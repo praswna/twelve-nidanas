@@ -701,7 +701,7 @@ function takeStrand(tw){
   let pick=null, bs=-1e9;
   for(const t of tips){ const sc=(t.x-su.x)*ux+(t.y-su.y)*uy+R_(0,14); if(sc>bs){ bs=sc; pick=t; } }
   if(!pick) pick=tw.pap[tw.pap.length-1];
-  for(let q=pick;q;q=q.parent) q.p.classList.add('took');
+  for(let q=pick;q;q=q.parent){ q.p.classList.add('took'); q.p.style.strokeWidth='1.1'; }
   const ae=addNode(tw,'애',pick.x,pick.y,true);
   tw.segs.push(null);                                    // 애's line is the strand, already drawn
   // 취·유 continue in the strand's direction, bending back a little toward the twig's own heading
@@ -741,20 +741,26 @@ function papanca(tw,i){
   const n=tw.nodes[i], from=tw.nodes[i-1];
   const base=Math.atan2(n.y-from.y,n.x-from.x);
   let count=0;
-  const spray=(x,y,a,len,depth,delay,parent)=>{
+  // grown by the rules living branches follow: each level shorter by a fixed ratio and thinner as
+  // vessels are (two children ≈ 0.8 of the parent), a leader that keeps its heading with a gentle
+  // curve, side branches at a steady angle alternating left and right, every segment slightly bowed
+  const spray=(x,y,a,len,w,depth,delay,parent,side,curv)=>{
     const x2=x+Math.cos(a)*len, y2=y+Math.sin(a)*len;
-    const p=el('path',{class:'pap',d:`M${x.toFixed(1)} ${y.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`});
+    const mx=(x+x2)/2-Math.sin(a)*len*curv, my=(y+y2)/2+Math.cos(a)*len*curv;
+    const p=el('path',{class:'pap',d:`M${x.toFixed(1)} ${y.toFixed(1)} Q${mx.toFixed(1)} ${my.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`,style:`stroke-width:${w.toFixed(2)}`});
     tw.g.insertBefore(p,tw.g.firstChild);              // beneath the twig's own line and nodes
     grow(p); later(()=>{ p.style.strokeDashoffset=0; },delay); count++;
     const q={p,x:x2,y:y2,parent}; tw.pap.push(q);
-    if(depth<=0||count>40) return;
-    const forks=Math.random()<0.6?2:1;
-    for(let k=0;k<forks;k++) spray(x2,y2,a+R_(-0.9,0.9),len*R_(0.6,0.85),depth-1,delay+110,q);
+    if(depth<=0||count>56) return;
+    // the leader: same heading, bending on with its curve
+    spray(x2,y2,a+curv*0.9+R_(-0.12,0.12),len*0.78,w*0.82,depth-1,delay+110,q,-side,curv*R_(0.7,1.1));
+    // a side branch: a steady angle off the leader, alternating sides, shorter and thinner
+    if(depth>=1&&Math.random()<0.85) spray(x2,y2,a+side*R_(0.55,0.75),len*0.62,w*0.66,depth-2,delay+110,q,side,side*0.12);
   };
   const stems=2+Math.floor(Math.random()*2);
   for(let k=0;k<stems;k++){
-    const side=k%2?1:-1, a=base+side*R_(0.45,1.5);
-    spray(n.x,n.y,a,R_(14,22),3,60,null);
+    const side=k%2?1:-1, a=base+side*R_(0.5,1.3);
+    spray(n.x,n.y,a,R_(16,22),1.0,4,60,null,-side,side*R_(0.06,0.14));
   }
   return PAP_MS;
 }
