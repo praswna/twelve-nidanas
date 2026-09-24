@@ -90,7 +90,8 @@
   .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s,stroke-dashoffset .38s ease-out}
   .twig.was{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
   .node circle{fill:var(--dim);transition:fill .5s,opacity .6s}
-  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s}
+  .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s;
+    paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}   /* a knock-out so the name reads over the sprays */
   .node.hid circle,.node.hid text{opacity:0}
   .node.lit circle{fill:color-mix(in srgb,var(--glow) var(--lifepct),var(--bg))}
   .node.lit text{fill:color-mix(in srgb,var(--ink) var(--lifepct),var(--bg))}
