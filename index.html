@@ -88,21 +88,23 @@
   .name.show{opacity:1}
   /* twigs: 촉 수 애 취 유 */
   .twig{fill:none;stroke:var(--dim);stroke-width:1.1;transition:stroke 1.2s,stroke-dashoffset .38s ease-out}
-  .twig.was{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
+  .twig.on{stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}     /* the line into the link now alight */
+  .twig.was{stroke:#2e2f33}                                                   /* passed: cold grey, as if already spent */
   .node circle{fill:var(--dim);transition:fill .5s,opacity .6s}
   .node text{fill:#7c7d82;font-size:10px;text-anchor:middle;pointer-events:none;transition:fill .5s,opacity .6s;
     paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}   /* a knock-out so the name reads over the sprays */
   .node.hid circle,.node.hid text{opacity:0}
   .node.lit circle{fill:color-mix(in srgb,var(--glow) var(--lifepct),var(--bg))}
   .node.lit text{fill:color-mix(in srgb,var(--ink) var(--lifepct),var(--bg))}
-  .node.was circle{fill:color-mix(in srgb,var(--ember) var(--lifepct),var(--bg))}
-  .node.was text{fill:color-mix(in srgb,#a89a86 var(--lifepct),var(--bg))}
+  .node.was circle{fill:#2e2f33}
+  .node.was text{fill:#45464b}
   /* 수·애·취·유 do not age: feeling (pain and grief come with 노사) and craving stay bright; only the door, 촉, dims */
   .node.tanha.lit circle{fill:var(--glow)} .node.tanha.lit text{fill:var(--ink)}
-  .node.tanha.was circle{fill:var(--ember)} .node.tanha.was text{fill:#a89a86}
+  .node.tanha.was circle{fill:#2e2f33} .node.tanha.was text{fill:#45464b}
   /* papañca: what one feels one perceives, thinks, proliferates — nameless thin sprays off 수 (MN 18) */
   .pap{fill:none;stroke:#5a4530;stroke-width:.8;stroke-linecap:round;transition:stroke-dashoffset .32s ease-out,stroke 1.2s}
   .pap.took{stroke-width:1.1;stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
+  .pap.took.was{stroke:#2e2f33}
   /* once craving has taken one strand, the rest of the spray loses the mind and goes out */
   .pap.left{stroke:#26272b}
   .tg.spent .pap{stroke:#232427}
@@ -115,7 +117,7 @@
   .tg.spent .node text{fill:#45464b}
   .gone .tg{opacity:0}
   /* the last 유 of a life outlasts the fire: it is what conditions the next birth */
-  .node.linger circle{fill:var(--ember)} .node.linger text{fill:#a89a86}
+  .node.linger circle,.node.tanha.linger circle{fill:var(--ember)} .node.linger text,.node.tanha.linger text{fill:#a89a86}
   /* 유 and the fire answer each other */
   #meet .core{transform-box:fill-box;transform-origin:center}
   .node.yu circle{transform-box:fill-box;transform-origin:center;animation:yuPulse 1.1s cubic-bezier(.2,.8,.3,1)}
@@ -753,7 +755,7 @@ function burn(tw,i,prev){
   if(fallen) return;
   const n=tw.nodes[i], seg=tw.segs[i];
   // the twig grows out to this node, then the node appears
-  if(seg){ seg.classList.add('was'); seg.style.strokeDashoffset=0; }
+  if(seg){ seg.classList.add('on'); seg.style.strokeDashoffset=0; }
   mark(n.ng,'lit'); line.textContent=says(prev,n.name);
   const hold=n.name==='수'?papanca(tw,i):0;              // 수 → 상 → 심 → 희론: the spray, then 애 takes one strand
   if(n.name==='유'){
@@ -764,7 +766,9 @@ function burn(tw,i,prev){
     later(()=>growPair(afterGrowth), STEP);
   }
   later(()=>{
-    mark(n.ng,'was');
+    mark(n.ng,'was');                                    // this link has passed: it and its line go cold
+    if(seg) seg.classList.add('was');
+    if(n.name==='애') tw.pap.forEach(q=>{ if(q.p.classList.contains('took')) q.p.classList.add('was'); });
     if(n.name==='수') takeStrand(tw);
     if(i<LOOP.length-1){ burn(tw,i+1,n.name); return; }
     feed(tw);                                            // arisen once, 촉 to 유; what it leaves is already in the fire and the roots
