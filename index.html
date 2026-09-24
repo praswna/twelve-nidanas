@@ -106,11 +106,12 @@
   .tg.spent .pap{stroke:#232427}
   .tg.spent .pap.took{stroke:#2e2f33}
   /* the living twig carries the pulse out from the fire to its tip */
-  .tg:not(.spent) .twig.was,.tg:not(.spent) .pap.took{animation:sparkStroke var(--breath,3.2s) linear infinite}
-  .tg:not(.spent) .node.was circle{animation:sparkFill var(--breath,3.2s) linear infinite}
-  /* rest: a warm grey (alive, no spark now); flash: the glow, with a short tail */
-  @keyframes sparkStroke{0%,100%{stroke:#4a3e32}6%{stroke:#e8a25a}22%{stroke:#4a3e32}}
-  @keyframes sparkFill{0%,100%{fill:#4a3e32}6%{fill:#ffcf8a}22%{fill:#4a3e32}}
+  /* while a twig grows, the growing front is its only light; once it has reached 유 it lingers a few
+     breaths and a spark echoes 촉→유 each breath — a little dimmer than the first arising — then it sinks */
+  .tg.done:not(.spent) .twig.was,.tg.done:not(.spent) .pap.took{animation:sparkStroke var(--breath,3.2s) linear infinite}
+  .tg.done:not(.spent) .node.was circle{animation:sparkFill var(--breath,3.2s) linear infinite}
+  @keyframes sparkStroke{0%,100%{stroke:#4a3e32}6%{stroke:#c98a4a}22%{stroke:#4a3e32}}
+  @keyframes sparkFill{0%,100%{fill:#4a3e32}6%{fill:#e8b57a}22%{fill:#4a3e32}}
   .tg{transition:opacity 1.4s}
   .tg.spent .twig{stroke:#2e2f33}
   .tg.spent .node circle{fill:#2e2f33}
@@ -769,7 +770,10 @@ function burn(tw,i,prev){
     mark(n.ng,'was'); syncPulse();
     if(n.name==='수') takeStrand(tw);
     if(i<LOOP.length-1){ burn(tw,i+1,n.name); return; }
-    feed(tw);
+    // arrived at 유: the twig stays alive for a few breaths while the spark echoes through it, then sinks
+    tw.g.classList.add('done'); syncPulse();
+    const B=(parseFloat(getComputedStyle(meet).getPropertyValue('--breath'))||3.2)*1000;
+    later(()=>feed(tw),Math.round(2.5*B));
   },STEP+hold);
 }
 const PAP_MS=520;
