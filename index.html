@@ -723,8 +723,14 @@ function takeStrand(tw){
   const su=tw.nodes[1];
   const tips=tw.pap.filter(q=>!tw.pap.some(r=>r.parent===q));
   const ux=Math.cos(tw.a), uy=Math.sin(tw.a);
+  // craving lands on a strand that is still heading on, not one that has curled sideways or back:
+  // score by how far it reaches forward and how closely its last direction agrees with the twig's
+  const endDir=t=>{ const px=t.parent?t.parent.x:su.x, py=t.parent?t.parent.y:su.y; return Math.atan2(t.y-py,t.x-px); };
   let pick=null, bs=-1e9;
-  for(const t of tips){ const sc=(t.x-su.x)*ux+(t.y-su.y)*uy+R_(0,14); if(sc>bs){ bs=sc; pick=t; } }
+  for(const t of tips){
+    const agree=Math.cos(endDir(t)-tw.a); if(agree<0.45) continue;
+    const sc=(t.x-su.x)*ux+(t.y-su.y)*uy+agree*24+R_(0,10); if(sc>bs){ bs=sc; pick=t; }
+  }
   if(!pick) pick=tw.pap[tw.pap.length-1];
   for(let q=pick;q;q=q.parent){ q.p.classList.add('took'); q.p.style.strokeWidth='1.1'; }
   const ae=addNode(tw,'애',pick.x,pick.y,true);
@@ -733,7 +739,9 @@ function takeStrand(tw){
   let a=Math.atan2(pick.y-(pick.parent?pick.parent.y:su.y), pick.x-(pick.parent?pick.parent.x:su.x));
   let from=ae;
   for(const name of ['취','유']){
-    a+= (tw.a-a)*0.35 + R_(-.3,.3);
+    // carry on from the strand: turn back toward the twig's heading only gently, never a sharp kink
+    let d=Math.atan2(Math.sin(tw.a-a),Math.cos(tw.a-a));
+    a+= Math.max(-0.28,Math.min(0.28,d*0.3)) + R_(-.1,.1);
     const to={x:from.x+Math.cos(a)*TSTEP, y:from.y+Math.sin(a)*TSTEP};
     addSeg(tw,from,to); from=addNode(tw,name,to.x,to.y,true);
   }
