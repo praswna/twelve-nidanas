@@ -102,7 +102,9 @@
   .node.tanha.was circle{fill:var(--ember)} .node.tanha.was text{fill:#a89a86}
   /* papañca: what one feels one perceives, thinks, proliferates — nameless thin sprays off 수 (MN 18) */
   .pap{fill:none;stroke:#5a4530;stroke-width:.8;stroke-linecap:round;transition:stroke-dashoffset .32s ease-out,stroke 1.2s}
+  .pap.took{stroke-width:1.1;stroke:color-mix(in srgb,#6b5238 var(--lifepct),var(--bg))}
   .tg.spent .pap{stroke:#232427}
+  .tg.spent .pap.took{stroke:#2e2f33}
   .tg{transition:opacity 1.4s}
   .tg.spent .twig{stroke:#2e2f33}
   .tg.spent .node circle{fill:#2e2f33}
@@ -155,7 +157,7 @@
 |---|---|
 | 식 ↔ 명색 | 서로 기대어 선 두 갈대. 접점에 불이 있다. |
 | 촉 → 수 → 애 → 취 → 유 | 접점의 불에서 돋는 잔가지. 하나씩 켜지고, 다 타면 회색 흔적으로 가라앉는다. |
-| 희론 (papañca) | 수 마디에서 이름 없는 가는 가지들이 확 퍼져 갈라지고 또 갈라진다. 그중 한 갈래가 애로 이어진다. |
+| 희론 (papañca) | 수 마디에서 이름 없는 가는 가지들이 확 퍼져 갈라지고 또 갈라진다. 애는 미리 정해진 자리가 아니라 **그 가지 끝 중 하나**에 붙고, 그 갈래가 잔가지의 선이 된다. 취·유는 거기서 이어진다. |
 | 유 → 식의 증장 | 유가 들어올 때마다 불이 번쩍이고, 식·명색이 아래로 한 마디씩 뿌리내린다. |
 | 생 | 옛 뿌리 더미에서 새 쌍이 각자 올라와 맞닿는 순간 접점과 불이 생긴다. |
 | 노사 | 불의 밝기가 나이에 따라 흐려지고, 마지막에 꺼지며 접점이 사라지고 둘 다 회색으로 남는다. 마지막 유만 남았다가 새 쌍이 맞닿는 순간 꺼진다. |
@@ -194,6 +196,10 @@
 > 부품들이 모일 때 '수레'라는 말이 있듯, 무더기들이 있을 때 '중생'이라는 관습이 있다." — SN 5.10 (와지라 비구니)
 
 한 줄기가 "수레"라는 이름이고, 아래 두 갈래가 부품이다.
+
+재료로 보면 이 줄기는 **촉과 식·명색이 합쳐져 쌓인 것**이다. 잔가지마다 수에서 퍼졌다가 한 갈래로 모인 희론이 애·취·유가 되어 불로 들어가고, 그때마다 줄기가 한 마디 자란다.
+MN 18의 뒤집힌 문법 — "희론이 사람을 덮친다" — 이 여기서 형태가 된다: 사람이 희론을 만드는 것이 아니라 퍼진 것이 모여 사람(줄기)이 되고, 그 줄기 끝에서 다음 촉이 돋아 또 퍼진다.
+줄기는 희론의 결과이자 다음 희론의 자리다. 그래서 "과거로 뻗는 희론"을 따로 그리지 않는다 — 줄기가 그것이다. 괴로움의 무더기(dukkhakkhandha).
 
 ## 학파에 따라 갈리는 곳
 
@@ -655,37 +661,63 @@ function clearance(x,y,a,len){
   }
   return m;
 }
+// a twig is built one segment at a time: 촉 and 수 are laid out from the leaning; then feeling
+// proliferates, and 애 is wherever craving lands — the tip of one strand of that spray; 취·유 follow on from there
+const TSTEP=22;
 function sprout(){
   // 촉 arises at the being: every twig starts at the meeting point
-  const len=R_(95,125);
   let best=null;
   for(let k=0;k<18;k++){
     const a=-Math.PI/2+R_(-1.5,1.5);
-    const c=clearance(MEET.x,MEET.y,a,len);
+    const c=clearance(MEET.x,MEET.y,a,110);
     if(!best||c>best.c) best={a,c};
   }
   if(!best) return null;
   const g=el('g',{class:'tg'}); twigsG.appendChild(g);
-  const x2=MEET.x+Math.cos(best.a)*len, y2=MEET.y+Math.sin(best.a)*len;
-  const b=best.a+R_(-.4,.4), cx=MEET.x+Math.cos(b)*len*.5, cy=MEET.y+Math.sin(b)*len*.5;
-  const p=el('path',{class:'twig',d:`M${MEET.x} ${MEET.y} Q${cx} ${cy} ${x2} ${y2}`}); g.appendChild(p);
-  const Ln=grow(p);
-  const nodes=LOOP.map((n,i)=>{
-    const t=p.getPointAtLength(Ln*(i+1)/LOOP.length);
-    const ng=el('g',{class:'node hid'+(i>=1?' tanha':'')});   // 수·애·취·유: feeling and craving do not age
-    ng.appendChild(el('circle',{cx:t.x,cy:t.y,r:3.6}));
-    const tx=el('text',{x:t.x,y:t.y-8}); tx.textContent=n; ng.appendChild(tx); g.appendChild(ng);
-    ALL.push({x:t.x,y:t.y});
-    return {ng,name:n,x:t.x,y:t.y};
-  });
-  return {g,p,nodes,Ln};
+  const tw={g,nodes:[],segs:[],pap:[],a:best.a};
+  const p1={x:MEET.x+Math.cos(best.a)*TSTEP, y:MEET.y+Math.sin(best.a)*TSTEP};
+  const a2=best.a+R_(-.35,.35);
+  const p2={x:p1.x+Math.cos(a2)*TSTEP, y:p1.y+Math.sin(a2)*TSTEP};
+  addSeg(tw,MEET,p1); addNode(tw,'촉',p1.x,p1.y,false);
+  addSeg(tw,p1,p2);   addNode(tw,'수',p2.x,p2.y,true);
+  return tw;
+}
+function addSeg(tw,from,to){
+  const p=el('path',{class:'twig',d:`M${from.x.toFixed(1)} ${from.y.toFixed(1)} L${to.x.toFixed(1)} ${to.y.toFixed(1)}`});
+  tw.g.appendChild(p); grow(p); tw.segs.push(p); return p;
+}
+function addNode(tw,name,x,y,tanha){
+  const ng=el('g',{class:'node hid'+(tanha?' tanha':'')});      // 수·애·취·유: feeling and craving do not age
+  ng.appendChild(el('circle',{cx:x,cy:y,r:3.6}));
+  const tx=el('text',{x,y:y-8}); tx.textContent=name; ng.appendChild(tx); tw.g.appendChild(ng);
+  ALL.push({x,y});
+  const n={ng,name,x,y}; tw.nodes.push(n); return n;
+}
+// craving lands: one strand of the spray becomes the twig's own line, its tip becomes 애, and 취·유 go on from there
+function takeStrand(tw){
+  const su=tw.nodes[1];
+  const tips=tw.pap.filter(q=>!tw.pap.some(r=>r.parent===q));
+  const ux=Math.cos(tw.a), uy=Math.sin(tw.a);
+  let pick=null, bs=-1e9;
+  for(const t of tips){ const sc=(t.x-su.x)*ux+(t.y-su.y)*uy+R_(0,14); if(sc>bs){ bs=sc; pick=t; } }
+  if(!pick) pick=tw.pap[tw.pap.length-1];
+  for(let q=pick;q;q=q.parent) q.p.classList.add('took');
+  const ae=addNode(tw,'애',pick.x,pick.y,true);
+  tw.segs.push(null);                                    // 애's line is the strand, already drawn
+  // 취·유 continue in the strand's direction, bending back a little toward the twig's own heading
+  let a=Math.atan2(pick.y-(pick.parent?pick.parent.y:su.y), pick.x-(pick.parent?pick.parent.x:su.x));
+  let from=ae;
+  for(const name of ['취','유']){
+    a+= (tw.a-a)*0.35 + R_(-.3,.3);
+    const to={x:from.x+Math.cos(a)*TSTEP, y:from.y+Math.sin(a)*TSTEP};
+    addSeg(tw,from,to); from=addNode(tw,name,to.x,to.y,true);
+  }
 }
 function burn(tw,i,prev){
   if(fallen) return;
-  const n=tw.nodes[i];
-  if(i===0) tw.p.classList.add('was');
+  const n=tw.nodes[i], seg=tw.segs[i];
   // the twig grows out to this node, then the node appears
-  tw.p.style.strokeDashoffset=tw.Ln*(1-(i+1)/tw.nodes.length);
+  if(seg){ seg.classList.add('was'); seg.style.strokeDashoffset=0; }
   mark(n.ng,'lit'); line.textContent=says(prev,n.name);
   const hold=n.name==='수'?papanca(tw,i):0;              // 수 → 상 → 심 → 희론: the spray, then 애 takes one strand
   if(n.name==='유'){
@@ -697,7 +729,8 @@ function burn(tw,i,prev){
   }
   later(()=>{
     mark(n.ng,'was');
-    if(i<tw.nodes.length-1){ burn(tw,i+1,n.name); return; }
+    if(n.name==='수') takeStrand(tw);
+    if(i<LOOP.length-1){ burn(tw,i+1,n.name); return; }
     feed(tw);
   },STEP+hold);
 }
@@ -708,23 +741,23 @@ function papanca(tw,i){
   const n=tw.nodes[i], from=tw.nodes[i-1];
   const base=Math.atan2(n.y-from.y,n.x-from.x);
   let count=0;
-  const spray=(x,y,a,len,depth,delay)=>{
+  const spray=(x,y,a,len,depth,delay,parent)=>{
     const x2=x+Math.cos(a)*len, y2=y+Math.sin(a)*len;
     const p=el('path',{class:'pap',d:`M${x.toFixed(1)} ${y.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}`});
     tw.g.insertBefore(p,tw.g.firstChild);              // beneath the twig's own line and nodes
     grow(p); later(()=>{ p.style.strokeDashoffset=0; },delay); count++;
+    const q={p,x:x2,y:y2,parent}; tw.pap.push(q);
     if(depth<=0||count>40) return;
     const forks=Math.random()<0.6?2:1;
-    for(let k=0;k<forks;k++) spray(x2,y2,a+R_(-0.9,0.9),len*R_(0.6,0.85),depth-1,delay+110);
+    for(let k=0;k<forks;k++) spray(x2,y2,a+R_(-0.9,0.9),len*R_(0.6,0.85),depth-1,delay+110,q);
   };
   const stems=2+Math.floor(Math.random()*2);
   for(let k=0;k<stems;k++){
     const side=k%2?1:-1, a=base+side*R_(0.45,1.5);
-    spray(n.x,n.y,a,R_(12,20),3,60);
+    spray(n.x,n.y,a,R_(14,22),3,60,null);
   }
   return PAP_MS;
 }
-// at 유 the twig ceases; the leaning has grown by what was craved
 const MAXSPENT=40;
 function feed(tw){
   tw.g.classList.add('spent'); spentG.appendChild(tw.g);   // the event is over; it sinks beneath everything as a grey trace
