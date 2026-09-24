@@ -106,10 +106,11 @@
   .tg.spent .pap{stroke:#232427}
   .tg.spent .pap.took{stroke:#2e2f33}
   /* the living twig carries the pulse out from the fire to its tip */
-  .tg:not(.spent) .twig.was,.tg:not(.spent) .pap.took{animation:chainStroke var(--breath,3.2s) ease-in-out infinite}
-  .tg:not(.spent) .node.was:not(.tanha) circle{animation:chainFill var(--breath,3.2s) ease-in-out infinite}
-  .tg:not(.spent) .node.tanha.was circle{animation:tanhaFill var(--breath,3.2s) ease-in-out infinite}
-  @keyframes tanhaFill{0%,100%{fill:#7a5734}50%{fill:#e8a25a}}
+  .tg:not(.spent) .twig.was,.tg:not(.spent) .pap.took{animation:sparkStroke var(--breath,3.2s) linear infinite}
+  .tg:not(.spent) .node.was circle{animation:sparkFill var(--breath,3.2s) linear infinite}
+  /* rest: a warm grey (alive, no spark now); flash: the glow, with a short tail */
+  @keyframes sparkStroke{0%,100%{stroke:#4a3e32}6%{stroke:#e8a25a}22%{stroke:#4a3e32}}
+  @keyframes sparkFill{0%,100%{fill:#4a3e32}6%{fill:#ffcf8a}22%{fill:#4a3e32}}
   .tg{transition:opacity 1.4s}
   .tg.spent .twig{stroke:#2e2f33}
   .tg.spent .node circle{fill:#2e2f33}
@@ -490,7 +491,7 @@ const segEnds=p=>{ const n=(p.getAttribute('d')||'').match(/-?[\d.]+/g); return 
 function flowSync(){
   const ref=meet.querySelector('.halo').getAnimations().find(a=>a.animationName==='breathe');
   if(!ref||ref.startTime==null) return;
-  const set=(e,d)=>{ if(!e) return; e.getAnimations().forEach(an=>{ if(!/^(chain|tanha)/.test(an.animationName)) return;
+  const set=(e,d)=>{ if(!e) return; e.getAnimations().forEach(an=>{ if(!/^chain/.test(an.animationName)) return;
     an.ready.then(()=>{ try{ an.startTime=ref.startTime+d*FLOW; }catch(_){} }); }); };
   // the stalk, from the Λ up to the fire: nearer the fire, earlier
   const ups=[...upG.querySelectorAll('path:not(.dead)')].map(p=>({p,e:segEnds(p)})).filter(q=>q.e);
@@ -504,12 +505,16 @@ function flowSync(){
     const d=dist(sg), e=segEnds(sg.p), l=e?Math.hypot(e[2]-e[0],e[3]-e[1]):14;
     set(sg.p,T+d-l/2); set(sg.ng.querySelector('circle'),T+d);
   }
-  // the burning twig: out from the fire, node by node
+  // the burning twig: one spark leaves the fire each breath and reaches 유 within that breath —
+  // so its delays are a share of the breath, not a fixed speed
   const tw=curTw; if(tw&&tw.nodes.length){
-    let prev={x:tw.x0,y:tw.y0}, acc=0;
-    tw.nodes.forEach((n,k)=>{ const l=Math.hypot(n.x-prev.x,n.y-prev.y);
-      if(tw.segs[k]) set(tw.segs[k],acc+l/2); acc+=l; set(n.ng.querySelector('circle'),acc); prev=n; });
-    tw.pap.filter(q=>q.p.classList.contains('took')).forEach(q=>set(q.p,Math.hypot(q.x-tw.x0,q.y-tw.y0)));
+    const B=ref.effect.getTiming().duration, span=0.7;   // the spark takes 70% of a breath to cross the twig
+    let prev={x:tw.x0,y:tw.y0}, acc=0; const at=[];
+    tw.nodes.forEach((n,k)=>{ const l=Math.hypot(n.x-prev.x,n.y-prev.y); at.push({seg:tw.segs[k],mid:acc+l/2}); acc+=l; at.push({node:n.ng.querySelector('circle'),d:acc}); prev=n; });
+    const total=acc||1, setB=(e,d)=>{ if(!e) return; e.getAnimations().forEach(an=>{ if(!/^spark/.test(an.animationName)) return;
+      an.ready.then(()=>{ try{ an.startTime=ref.startTime+(d/total)*span*B; }catch(_){} }); }); };
+    at.forEach(q=>q.seg?setB(q.seg,q.mid):setB(q.node,q.d));
+    tw.pap.filter(q=>q.p.classList.contains('took')).forEach(q=>setB(q.p,Math.hypot(q.x-tw.x0,q.y-tw.y0)));
   }
 }
 function syncPulse(){ requestAnimationFrame(flowSync); }
